@@ -75,7 +75,7 @@ pub struct Word {
 impl From<&str> for Word {
     fn from(item: &str) -> Self {
         let word = item.to_owned();
-        let length = word.len();
+        let length = word.chars().count();
         let syllables = syllabize(&word);
         let stress = identify_stress(&syllables);
         let (hiatuses, diphthongs, triphthongs) = find_vowel_combos(&syllables);
@@ -103,8 +103,8 @@ fn syllabize(word: &String) -> Vec<Syllable> {
         nucleus: "".to_string(),
         coda: "".to_string(),
     };
-    let word_len = word.len();
     let chars: Vec<char> = word.chars().collect();
+    let word_len = chars.len();
     let mut syllables: Vec<Syllable> = Vec::new();
     loop {
         let curr_char = chars[index];
@@ -115,14 +115,14 @@ fn syllabize(word: &String) -> Vec<Syllable> {
             } else if position == Position::Nucleus {
                 if curr_char == 'y'
                     && (index == word_len - 1
-                        || (index + 1 < word_len && chars[index + 1].is_vowel()))
+                        || (index + 1 < word_len && !chars[index + 1].is_vowel()))
                 {
                     syllable.nucleus.push(curr_char);
                 } else if curr_char == 'h' {
                     index += 1;
                     let next_char = chars[index];
                     if next_char.is_vowel() {
-                        if syllable.nucleus.len() == 1
+                        if syllable.nucleus.chars().count() == 1
                             && is_hiatus(syllable.nucleus.chars().nth(0).unwrap(), next_char)
                         {
                             syllables.push(syllable);
@@ -182,7 +182,7 @@ fn syllabize(word: &String) -> Vec<Syllable> {
                 position = Position::Nucleus;
                 syllable.nucleus.push(curr_char);
             } else if position == Position::Nucleus {
-                if syllable.nucleus.len() == 1 {
+                if syllable.nucleus.chars().count() == 1 {
                     if is_hiatus(curr_char, syllable.nucleus.chars().nth(0).unwrap()) {
                         syllables.push(syllable);
                         syllable = Syllable {
@@ -193,7 +193,7 @@ fn syllabize(word: &String) -> Vec<Syllable> {
                     } else {
                         syllable.nucleus.push(curr_char);
                     }
-                } else if syllable.nucleus.len() == 2 {
+                } else if syllable.nucleus.chars().count() == 2 {
                     if is_triphthong(
                         syllable.nucleus.chars().nth(0).unwrap(),
                         syllable.nucleus.chars().nth(1).unwrap(),
@@ -225,7 +225,7 @@ fn syllabize(word: &String) -> Vec<Syllable> {
                     }
                 }
             } else if position == Position::Coda {
-                if syllable.coda.len() == 1 {
+                if syllable.coda.chars().count() == 1 {
                     let temp = syllable.coda.clone();
                     syllable.coda = "".to_string();
                     syllables.push(syllable);
@@ -234,7 +234,7 @@ fn syllabize(word: &String) -> Vec<Syllable> {
                         nucleus: curr_char.to_string(),
                         coda: "".to_string(),
                     }
-                } else if syllable.coda.len() == 2 {
+                } else if syllable.coda.chars().count() == 2 {
                     let temp: String;
                     if is_consonant_group(syllable.coda.as_str()) {
                         temp = syllable.coda.clone();
@@ -249,7 +249,7 @@ fn syllabize(word: &String) -> Vec<Syllable> {
                         nucleus: curr_char.to_string(),
                         coda: "".to_string(),
                     };
-                } else if syllable.coda.len() == 3 {
+                } else if syllable.coda.chars().count() == 3 {
                     let temp = syllable.coda.as_str()[1..3].to_string();
                     syllable.coda = syllable.coda.chars().nth(0).unwrap().to_string();
                     syllables.push(syllable);
@@ -258,7 +258,7 @@ fn syllabize(word: &String) -> Vec<Syllable> {
                         nucleus: curr_char.to_string(),
                         coda: "".to_string(),
                     }
-                } else if syllable.coda.len() == 4 {
+                } else if syllable.coda.chars().count() == 4 {
                     let temp = syllable.coda.as_str()[2..4].to_string();
                     syllable.coda = syllable.coda.as_str()[0..2].to_string();
                     syllables.push(syllable);
@@ -331,10 +331,10 @@ fn find_vowel_combos(syllables: &Vec<Syllable>) -> (Vec<Hiatus>, Vec<Diphthong>,
     let dp_homogenous = Regex::new("[iíuúü][iíuúüy]").unwrap();
     while index < syllables.len() {
         if syllables[index].coda == ""
-            && syllables[index].nucleus.len() == 1
+            && syllables[index].nucleus.chars().count() == 1
             && index + 1 < syllables.len()
             && (syllables[index + 1].onset == "" || syllables[index + 1].onset == "h")
-            && syllables[index + 1].nucleus.len() == 1
+            && syllables[index + 1].nucleus.chars().count() == 1
         {
             let mut composite = syllables[index].nucleus.clone();
             composite.push_str(syllables[index + 1].nucleus.as_str());
@@ -347,7 +347,7 @@ fn find_vowel_combos(syllables: &Vec<Syllable>) -> (Vec<Hiatus>, Vec<Diphthong>,
                     HiatusType::Simple
                 },
             });
-        } else if syllables[index].nucleus.len() == 2 {
+        } else if syllables[index].nucleus.chars().count() == 2 {
             let dp_type: DiphthongType;
             if dp_rising.is_match(syllables[index].nucleus.as_str()) {
                 dp_type = DiphthongType::Rising;
@@ -363,16 +363,16 @@ fn find_vowel_combos(syllables: &Vec<Syllable>) -> (Vec<Hiatus>, Vec<Diphthong>,
                 kind: dp_type,
                 composite: syllables[index].nucleus.clone(),
             });
-        } else if syllables[index].nucleus.len() == 3 {
+        } else if syllables[index].nucleus.chars().count() == 3 {
             triphthongs.push(Triphthong {
                 syllable_index: index,
                 composite: syllables[index].nucleus.clone(),
             });
         } else if syllables[index].coda == ""
-            && syllables[index].nucleus.len() == 2
+            && syllables[index].nucleus.chars().count() == 2
             && index + 1 < syllables.len()
             && (syllables[index + 1].onset == "" || syllables[index + 1].onset == "h")
-            && syllables[index + 1].nucleus.len() == 1
+            && syllables[index + 1].nucleus.chars().count() == 1
         {
             // ???
         }
@@ -392,7 +392,7 @@ fn find_rhyme(stress: &StressType, syllables: &Vec<Syllable>) -> String {
         StressType::Paroxytone => {
             let last_syllable = &syllables[syllables.len() - 1];
             let next_last_syllable = &syllables[syllables.len() - 2];
-            if next_last_syllable.nucleus.len() == 1 {
+            if next_last_syllable.nucleus.chars().count() == 1 {
                 let mut rhyme = next_last_syllable.nucleus.clone();
                 rhyme.push_str(next_last_syllable.coda.as_str());
                 rhyme.push_str(last_syllable.to_string().as_str());
@@ -400,7 +400,7 @@ fn find_rhyme(stress: &StressType, syllables: &Vec<Syllable>) -> String {
             } else {
                 let index = stress_index(next_last_syllable.nucleus.as_str());
                 let mut rhyme = next_last_syllable.nucleus.as_str()
-                    [index as usize..next_last_syllable.nucleus.len()]
+                    [index as usize..next_last_syllable.nucleus.chars().count()]
                     .to_string();
                 rhyme.push_str(next_last_syllable.coda.as_str());
                 rhyme.push_str(last_syllable.to_string().as_str());

@@ -1,6 +1,6 @@
 use std::env;
 
-use silabize_es::Word;
+use syllabize_es::Word;
 
 fn main() {
     let args = env::args().collect::<Vec<String>>();
