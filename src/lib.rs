@@ -23,6 +23,11 @@ pub enum StressType {
     Superproparoxytone, //sobresdrújula
 }
 
+// pub enum StressType {
+//     Prosodic,  // Acento prosódico
+//     Orthographic,  // Acento ortográfico
+// }
+
 #[derive(PartialEq)]
 enum Position {
     None,
@@ -59,17 +64,29 @@ pub struct Triphthong {
     composite: String,
 }
 
+#[derive(PartialEq, Debug)]
+pub struct Stress {
+    pub kind: StressType,
+    pub index: usize,
+}
+
 #[derive()]
 pub struct Word {
     pub word: String,
     pub length: usize,
     pub syllables: Vec<Syllable>,
-    pub stress: (StressType, usize),
+    pub stress: Stress,
     pub rhyme: String,
     pub tonic: Syllable,
     pub hiatuses: Vec<Hiatus>,
     pub diphthongs: Vec<Diphthong>,
     pub triphthongs: Vec<Triphthong>,
+}
+
+impl Word {
+    pub fn stress(&self) -> Stress {
+        return identify_stress(&self.syllables);
+    }
 }
 
 impl From<&str> for Word {
@@ -79,8 +96,8 @@ impl From<&str> for Word {
         let syllables = syllabize(&word);
         let stress = identify_stress(&syllables);
         let (hiatuses, diphthongs, triphthongs) = find_vowel_combos(&syllables);
-        let tonic = syllables[stress.1 - 1].clone();
-        let rhyme = find_rhyme(&stress.0, &syllables);
+        let tonic = syllables[stress.index].clone();
+        let rhyme = find_rhyme(&stress.kind, &syllables);
         Word {
             word,
             length,
@@ -280,34 +297,28 @@ fn syllabize(word: &String) -> Vec<Syllable> {
     syllables
 }
 
-fn identify_stress(syllables: &Vec<Syllable>) -> (StressType, usize) {
+fn identify_stress(syllables: &Vec<Syllable>) -> Stress {
     let syllable_count = syllables.len();
     if syllable_count == 1 {
-        return (StressType::Oxytone, 1);
+        return Stress { kind: StressType::Oxytone, index: 0};
     }
-    if syllable_count > 1 {
-        if syllables[syllable_count - 1].has_accent() {
-            return (StressType::Oxytone, 1);
-        }
+    if syllable_count > 1 && syllables[syllable_count - 1].has_accent() {
+        return Stress { kind: StressType::Oxytone, index: syllable_count - 1};
     }
-    if syllable_count >= 2 {
-        if syllables[syllable_count - 2].has_accent() {
-            return (StressType::Paroxytone, 2);
-        }
+    if syllable_count >= 2 && syllables[syllable_count - 2].has_accent() {
+        return Stress { kind: StressType::Paroxytone, index: syllable_count - 2};
     }
-    if syllable_count >= 3 {
-        if syllables[syllable_count - 3].has_accent() {
-            return (StressType::Proparoxytone, 3);
-        }
+    if syllable_count >= 3 && syllables[syllable_count - 3].has_accent() {
+        return Stress { kind: StressType::Proparoxytone, index: syllable_count - 3};
     }
     if syllable_count >= 4 {
         let mut index = syllable_count as i32 - 4;
         while index >= 0 {
             if syllables[index as usize].has_accent() {
-                return (
-                    StressType::Superproparoxytone,
-                    syllable_count - index as usize,
-                );
+                return Stress { 
+                    kind: StressType::Superproparoxytone,
+                    index: index as usize
+                };
             }
             index -= 1;
         }
@@ -315,10 +326,10 @@ fn identify_stress(syllables: &Vec<Syllable>) -> (StressType, usize) {
 
     let last_coda = syllables[syllable_count - 1].coda.as_str();
     if last_coda != "" && last_coda != "n" && last_coda != "s" {
-        return (StressType::Oxytone, 1);
+        return Stress { kind: StressType::Oxytone, index: syllable_count - 1}
     }
 
-    return (StressType::Paroxytone, 2);
+    return Stress { kind: StressType::Paroxytone, index: syllable_count - 2};
 }
 
 fn find_vowel_combos(syllables: &Vec<Syllable>) -> (Vec<Hiatus>, Vec<Diphthong>, Vec<Triphthong>) {
@@ -437,7 +448,7 @@ mod tests {
         assert_eq!(word.syllables[0].to_string(), "pa");
         assert_eq!(word.syllables[1].to_string(), "la");
         assert_eq!(word.syllables[2].to_string(), "bra");
-        assert_eq!(word.stress, (StressType::Paroxytone, 2));
+        assert_eq!(word.stress, Stress { kind: StressType::Paroxytone, index: 1 });
         assert_eq!(word.hiatuses.len(), 0);
         assert_eq!(word.diphthongs.len(), 0);
         assert_eq!(word.triphthongs.len(), 0);
@@ -453,7 +464,7 @@ mod tests {
         assert_eq!(
             word.tonic,
             Syllable {
-                onset: "".to_string(),
+                onset: "l".to_string(),
                 nucleus: "e".to_string(),
                 coda: "".to_string()
             }

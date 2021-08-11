@@ -7,7 +7,7 @@ fn test_oxytone() {
     ];
     for s in data {
         let w: Word = s.into();
-        assert_eq!(w.stress.0, StressType::Oxytone);
+        assert_eq!(w.stress.kind, StressType::Oxytone);
     }
 }
 
@@ -25,7 +25,7 @@ fn test_paroxytone() {
     ];
     for s in data {
         let w: Word = s.into();
-        assert_eq!(w.stress.0, StressType::Paroxytone);
+        assert_eq!(w.stress.kind, StressType::Paroxytone);
     }
 }
 
@@ -34,7 +34,7 @@ fn test_proparoxytones() {
     let data = vec!["esdrújula", "teléfono", "árboles"];
     for s in data {
         let w: Word = s.into();
-        assert_eq!(w.stress.0, StressType::Proparoxytone);
+        assert_eq!(w.stress.kind, StressType::Proparoxytone);
     }
 }
 
@@ -43,6 +43,6 @@ fn test_superproparoxytone() {
     let data = vec!["tráiganosla", "gíratelo", "rápidamente", "ávidamente"];
     for s in data {
         let w: Word = s.into();
-        assert_eq!(w.stress.0, StressType::Superproparoxytone);
+        assert_eq!(w.stress.kind, StressType::Superproparoxytone);
     }
 }
