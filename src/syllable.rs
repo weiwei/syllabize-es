@@ -1,3 +1,5 @@
+use std::fmt::{self, Display};
+
 use crate::char_util::*;
 use crate::str_util::stress_index;
 
@@ -13,23 +15,6 @@ pub struct Syllable {
 }
 
 impl Syllable {
-    /// Turn the syllable into a string.
-    /// ```
-    /// use syllabize_es::syllable::*;
-    /// let syllable = Syllable {
-    ///     onset: "b".to_string(),
-    ///     nucleus: "üey".to_string(),
-    ///     coda: "".to_string()
-    /// };
-    /// assert_eq!(syllable.to_string(), "büey");
-    /// ```
-    pub fn to_string(&self) -> String {
-        let mut result = String::from(&self.onset);
-        result.push_str(self.nucleus.as_str());
-        result.push_str(self.coda.as_str());
-        result
-    }
-
     /// Returns true if there is an accented vowel in the nucleus.
     ///
     /// # Example
@@ -73,6 +58,12 @@ impl Syllable {
     }
 }
 
+impl Display for Syllable {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}{}{}", &self.onset, &self.nucleus, &self.coda)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -84,7 +75,7 @@ mod tests {
             nucleus: "a".to_string(),
             coda: "t".to_string(),
         };
-        assert_eq!(s.to_string(), "bat");
+        assert_eq!(format!("{}", s), "bat");
     }
 
     #[test]

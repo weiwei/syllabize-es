@@ -4,24 +4,24 @@ const STRESSED_VOWELS: &str = "áéíóúaoeÁÉÍÓÚAOE";
 const WEAK_VOWELS: &str = "iuüIUÜ";
 
 pub trait IsVowel: private::Sealed {
-    fn is_vowel(self) -> bool;
-    fn is_weak_vowel(self) -> bool;
-    fn is_stressed_vowel(self) -> bool;
-    fn is_accented_vowel(self) -> bool;
+    fn is_vowel(&self) -> bool;
+    fn is_weak_vowel(&self) -> bool;
+    fn is_stressed_vowel(&self) -> bool;
+    fn is_accented_vowel(&self) -> bool;
 }
 
 impl IsVowel for char {
-    fn is_vowel(self) -> bool {
-        ACCENTED_VOWELS.contains(self) || NON_ACCENTED_VOWELS.contains(self)
+    fn is_vowel(&self) -> bool {
+        ACCENTED_VOWELS.contains(*self) || NON_ACCENTED_VOWELS.contains(*self)
     }
-    fn is_weak_vowel(self) -> bool {
-        WEAK_VOWELS.contains(self)
+    fn is_weak_vowel(&self) -> bool {
+        WEAK_VOWELS.contains(*self)
     }
-    fn is_stressed_vowel(self) -> bool {
-        STRESSED_VOWELS.contains(self)
+    fn is_stressed_vowel(&self) -> bool {
+        STRESSED_VOWELS.contains(*self)
     }
-    fn is_accented_vowel(self) -> bool {
-        ACCENTED_VOWELS.contains(self)
+    fn is_accented_vowel(&self) -> bool {
+        ACCENTED_VOWELS.contains(*self)
     }
 }
 

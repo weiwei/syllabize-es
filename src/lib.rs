@@ -7,7 +7,6 @@ extern crate test;
 
 use regex::Regex;
 use std::usize;
-use test::Bencher;
 
 pub mod char_util;
 pub mod str_util;
@@ -96,7 +95,7 @@ impl Word {
         rhyme.push_str(stress_syllable.coda.as_str());
 
         for i in self.stress_index + 1..self.syllables.len() {
-            rhyme.push_str(&self.syllables[i].to_string().as_str())
+            rhyme.push_str(self.syllables[i].to_string().as_str())
         }
         rhyme
     }
@@ -111,10 +110,10 @@ impl Word {
         let dp_falling = Regex::new("[aáeéoó][iíuúüy]").unwrap();
         let dp_homogenous = Regex::new("[iíuúü][iíuúüy]").unwrap();
         while index < syllables.len() {
-            if syllables[index].coda == ""
+            if syllables[index].coda.is_empty()
                 && syllables[index].nucleus.chars().count() == 1
                 && index + 1 < syllables.len()
-                && (syllables[index + 1].onset == "" || syllables[index + 1].onset == "h")
+                && (syllables[index + 1].onset.is_empty() || syllables[index + 1].onset == "h")
                 && syllables[index + 1].nucleus.chars().count() == 1
             {
                 let mut composite = syllables[index].nucleus.clone();
@@ -151,10 +150,10 @@ impl Word {
                     syllable_index: index,
                     composite: syllables[index].nucleus.clone(),
                 });
-            } else if syllables[index].coda == ""
+            } else if syllables[index].coda.is_empty()
                 && syllables[index].nucleus.chars().count() == 2
                 && index + 1 < syllables.len()
-                && (syllables[index + 1].onset == "" || syllables[index + 1].onset == "h")
+                && (syllables[index + 1].onset.is_empty() || syllables[index + 1].onset == "h")
                 && syllables[index + 1].nucleus.chars().count() == 1
             {
                 // ???
@@ -228,7 +227,7 @@ fn to_syllables(word: &str) -> Vec<Syllable> {
                     let next_char = chars[index];
                     if next_char.is_vowel() {
                         if syllable.nucleus.chars().count() == 1
-                            && can_form_hiatus(syllable.nucleus.chars().nth(0).unwrap(), next_char)
+                            && can_form_hiatus(syllable.nucleus.chars().next().unwrap(), next_char)
                         {
                             syllables.push(syllable);
                             syllable = Syllable {
@@ -242,7 +241,7 @@ fn to_syllables(word: &str) -> Vec<Syllable> {
                             let after_next_char = chars[index];
                             if after_next_char.is_vowel() {
                                 if can_form_triphthong(
-                                    syllable.nucleus.chars().nth(0).unwrap(),
+                                    syllable.nucleus.chars().next().unwrap(),
                                     next_char,
                                     after_next_char,
                                 ) {
@@ -282,100 +281,98 @@ fn to_syllables(word: &str) -> Vec<Syllable> {
             } else if position == Position::Coda {
                 syllable.coda.push(curr_char);
             }
-        } else {
-            if position == Position::None || position == Position::Onset {
-                position = Position::Nucleus;
-                syllable.nucleus.push(curr_char);
-            } else if position == Position::Nucleus {
-                if syllable.nucleus.chars().count() == 1 {
-                    if can_form_hiatus(curr_char, syllable.nucleus.chars().nth(0).unwrap()) {
+        } else if position == Position::None || position == Position::Onset {
+            position = Position::Nucleus;
+            syllable.nucleus.push(curr_char);
+        } else if position == Position::Nucleus {
+            if syllable.nucleus.chars().count() == 1 {
+                if can_form_hiatus(curr_char, syllable.nucleus.chars().next().unwrap()) {
+                    syllables.push(syllable);
+                    syllable = Syllable {
+                        onset: "".to_string(),
+                        nucleus: curr_char.to_string(),
+                        coda: "".to_string(),
+                    };
+                } else {
+                    syllable.nucleus.push(curr_char);
+                }
+            } else if syllable.nucleus.chars().count() == 2 {
+                if can_form_triphthong(
+                    syllable.nucleus.chars().next().unwrap(),
+                    syllable.nucleus.chars().nth(1).unwrap(),
+                    curr_char,
+                ) {
+                    syllable.nucleus.push(curr_char);
+                } else {
+                    let last_nucleus = syllable.nucleus.chars().nth(1).unwrap();
+                    if last_nucleus.is_weak_vowel() {
+                        syllable.nucleus = syllable.nucleus.chars().next().unwrap().to_string();
+                        syllables.push(syllable);
+                        let mut last_nucleus = last_nucleus.to_string();
+                        last_nucleus.push(curr_char);
+                        syllable = Syllable {
+                            onset: "".to_string(),
+                            nucleus: last_nucleus,
+                            coda: "".to_string(),
+                        }
+                    } else {
                         syllables.push(syllable);
                         syllable = Syllable {
                             onset: "".to_string(),
                             nucleus: curr_char.to_string(),
                             coda: "".to_string(),
-                        };
-                    } else {
-                        syllable.nucleus.push(curr_char);
-                    }
-                } else if syllable.nucleus.chars().count() == 2 {
-                    if can_form_triphthong(
-                        syllable.nucleus.chars().nth(0).unwrap(),
-                        syllable.nucleus.chars().nth(1).unwrap(),
-                        curr_char,
-                    ) {
-                        syllable.nucleus.push(curr_char);
-                        position = Position::Nucleus;
-                    } else {
-                        let last_nucleus = syllable.nucleus.chars().nth(1).unwrap();
-                        if last_nucleus.is_weak_vowel() {
-                            syllable.nucleus = syllable.nucleus.chars().nth(0).unwrap().to_string();
-                            syllables.push(syllable);
-                            let mut last_nucleus = last_nucleus.to_string();
-                            last_nucleus.push(curr_char);
-                            syllable = Syllable {
-                                onset: "".to_string(),
-                                nucleus: last_nucleus,
-                                coda: "".to_string(),
-                            }
-                        } else {
-                            syllables.push(syllable);
-                            syllable = Syllable {
-                                onset: "".to_string(),
-                                nucleus: curr_char.to_string(),
-                                coda: "".to_string(),
-                            }
                         }
-                        position = Position::Nucleus;
-                    }
-                }
-            } else if position == Position::Coda {
-                if syllable.coda.chars().count() == 1 {
-                    let temp = syllable.coda.clone();
-                    syllable.coda = "".to_string();
-                    syllables.push(syllable);
-                    syllable = Syllable {
-                        onset: temp,
-                        nucleus: curr_char.to_string(),
-                        coda: "".to_string(),
-                    }
-                } else if syllable.coda.chars().count() == 2 {
-                    let temp: String;
-                    if is_consonant_group(syllable.coda.as_str()) {
-                        temp = syllable.coda.clone();
-                        syllable.coda = "".to_string();
-                    } else {
-                        temp = syllable.coda.chars().nth(1).unwrap().to_string();
-                        syllable.coda = syllable.coda.chars().nth(0).unwrap().to_string();
-                    }
-                    syllables.push(syllable);
-                    syllable = Syllable {
-                        onset: temp,
-                        nucleus: curr_char.to_string(),
-                        coda: "".to_string(),
-                    };
-                } else if syllable.coda.chars().count() == 3 {
-                    let temp = syllable.coda.as_str()[1..3].to_string();
-                    syllable.coda = syllable.coda.chars().nth(0).unwrap().to_string();
-                    syllables.push(syllable);
-                    syllable = Syllable {
-                        onset: temp,
-                        nucleus: curr_char.to_string(),
-                        coda: "".to_string(),
-                    }
-                } else if syllable.coda.chars().count() == 4 {
-                    let temp = syllable.coda.as_str()[2..4].to_string();
-                    syllable.coda = syllable.coda.as_str()[0..2].to_string();
-                    syllables.push(syllable);
-                    syllable = Syllable {
-                        onset: temp,
-                        nucleus: curr_char.to_string(),
-                        coda: "".to_string(),
                     }
                 }
                 position = Position::Nucleus;
             }
+        } else if position == Position::Coda {
+            if syllable.coda.chars().count() == 1 {
+                let temp = syllable.coda.clone();
+                syllable.coda = "".to_string();
+                syllables.push(syllable);
+                syllable = Syllable {
+                    onset: temp,
+                    nucleus: curr_char.to_string(),
+                    coda: "".to_string(),
+                }
+            } else if syllable.coda.chars().count() == 2 {
+                let temp: String;
+                if is_consonant_group(syllable.coda.as_str()) {
+                    temp = syllable.coda.clone();
+                    syllable.coda = "".to_string();
+                } else {
+                    temp = syllable.coda.chars().nth(1).unwrap().to_string();
+                    syllable.coda = syllable.coda.chars().next().unwrap().to_string();
+                }
+                syllables.push(syllable);
+                syllable = Syllable {
+                    onset: temp,
+                    nucleus: curr_char.to_string(),
+                    coda: "".to_string(),
+                };
+            } else if syllable.coda.chars().count() == 3 {
+                let temp = syllable.coda.as_str()[1..3].to_string();
+                syllable.coda = syllable.coda.chars().next().unwrap().to_string();
+                syllables.push(syllable);
+                syllable = Syllable {
+                    onset: temp,
+                    nucleus: curr_char.to_string(),
+                    coda: "".to_string(),
+                }
+            } else if syllable.coda.chars().count() == 4 {
+                let temp = syllable.coda.as_str()[2..4].to_string();
+                syllable.coda = syllable.coda.as_str()[0..2].to_string();
+                syllables.push(syllable);
+                syllable = Syllable {
+                    onset: temp,
+                    nucleus: curr_char.to_string(),
+                    coda: "".to_string(),
+                }
+            }
+            position = Position::Nucleus;
         }
+
         index += 1;
         if index > word_len - 1 {
             syllables.push(syllable);
@@ -385,7 +382,7 @@ fn to_syllables(word: &str) -> Vec<Syllable> {
     syllables
 }
 
-fn identify_stress(syllables: &Vec<Syllable>) -> usize {
+fn identify_stress(syllables: &[Syllable]) -> usize {
     let syllable_count = syllables.len();
     if syllable_count == 1 {
         return 0;
@@ -410,7 +407,7 @@ fn identify_stress(syllables: &Vec<Syllable>) -> usize {
     }
 
     let last_coda = syllables[syllable_count - 1].coda.as_str();
-    if last_coda != "" && last_coda != "n" && last_coda != "s" {
+    if !last_coda.is_empty() && last_coda != "n" && last_coda != "s" {
         return syllable_count - 1;
     }
 
@@ -420,6 +417,7 @@ fn identify_stress(syllables: &Vec<Syllable>) -> usize {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use test::Bencher;
 
     #[test]
     fn test_hiato() {
@@ -467,12 +465,12 @@ mod tests {
 
 #[cfg(doctest)]
 mod test_readme {
-  macro_rules! external_doc_test {
-    ($x:expr) => {
-        #[doc = $x]
-        extern {}
-    };
-  }
+    macro_rules! external_doc_test {
+        ($x:expr) => {
+            #[doc = $x]
+            extern "C" {}
+        };
+    }
 
-  external_doc_test!(include_str!("../README.md"));
+    external_doc_test!(include_str!("../README.md"));
 }
