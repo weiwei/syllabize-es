@@ -57,3 +57,7 @@ assert_eq!(word.rhyme(), "ir");
 
 A simple command line utility is also provided:
 
+```shell-session
+$ syllabize palabra
+pa-la-bra
+```
