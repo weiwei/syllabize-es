@@ -20,4 +20,4 @@ jobs:
       uses: actions-rs/components-nightly@v1
       with:
         component: cargo
-      run: cargo build --verbose && cargo test --verbose
+      # run: cargo build --verbose && cargo test --verbose
