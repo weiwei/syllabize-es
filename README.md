@@ -27,7 +27,7 @@ assert_eq!(
 );
 
 // Get syllabified string, using "-" as delimiter
-assert_eq!(word.syllabify("-"), "cons-truir");
+assert_eq!(word.syllabize("-"), "cons-truir");
 
 // Index of the stressed syllable of `word.syllables`
 assert_eq!(word.stress_index, 1);
@@ -54,3 +54,6 @@ assert_eq!(dp.composite, "ui");
 // The rhyming part of the word
 assert_eq!(word.rhyme(), "ir");
 ```
+
+A simple command line utility is also provided:
+

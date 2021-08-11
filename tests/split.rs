@@ -28,7 +28,7 @@ fn diptongos() {
         .collect::<Vec<(String, String)>>();
     for (s, d) in src {
         let w: Word = s.as_str().into();
-        assert_eq!(w.syllabify("-"), d);
+        assert_eq!(w.syllabize("-"), d);
     }
 }
 
@@ -78,7 +78,7 @@ fn hiatos() {
         .collect::<Vec<(String, String)>>();
     for (s, d) in src {
         let w: Word = s.as_str().into();
-        assert_eq!(w.syllabify("-"), d);
+        assert_eq!(w.syllabize("-"), d);
     }
 }
 
@@ -107,7 +107,7 @@ fn triptongos() {
         .collect::<Vec<(String, String)>>();
     for (s, d) in src {
         let w: Word = s.as_str().into();
-        assert_eq!(w.syllabify("-"), d);
+        assert_eq!(w.syllabize("-"), d);
     }
 }
 
@@ -120,7 +120,7 @@ fn no_triptongos() {
         .collect::<Vec<(String, String)>>();
     for (s, d) in src {
         let w: Word = s.as_str().into();
-        assert_eq!(w.syllabify("-"), d);
+        assert_eq!(w.syllabize("-"), d);
     }
 }
 
@@ -170,7 +170,7 @@ fn ad_hoc() {
         .collect::<Vec<(String, String)>>();
     for (s, d) in src {
         let w: Word = s.as_str().into();
-        assert_eq!(w.syllabify("-"), d);
+        assert_eq!(w.syllabize("-"), d);
     }
 }
 
@@ -183,6 +183,6 @@ fn with_h() {
         .collect::<Vec<(String, String)>>();
     for (s, d) in src {
         let w: Word = s.as_str().into();
-        assert_eq!(w.syllabify("-"), d);
+        assert_eq!(w.syllabize("-"), d);
     }
 }

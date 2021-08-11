@@ -178,7 +178,7 @@ impl Word {
         }
     }
 
-    pub fn syllabify(&self, delimiter: &str) -> String {
+    pub fn syllabize(&self, delimiter: &str) -> String {
         return self
             .syllables
             .iter()
@@ -457,9 +457,9 @@ mod tests {
     }
 
     #[bench]
-    fn bench_syllabify(b: &mut Bencher) {
+    fn bench_syllabize(b: &mut Bencher) {
         let word: Word = "envergadura".into();
-        b.iter(|| word.syllabify("-"));
+        b.iter(|| word.syllabize("-"));
     }
 }
 
