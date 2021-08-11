@@ -1,18 +1,9 @@
-use syllabize_es::{Word, StressType};
+use syllabize_es::{StressType, Word};
 
 #[test]
 fn test_oxytone() {
     let data = vec![
-        "a",
-        "la",
-        "gol",
-        "olé",
-        "pié",
-        "piedad",
-        "pastel",
-        "habló",
-        "reloj",
-        "vivir",
+        "a", "la", "gol", "olé", "pié", "piedad", "pastel", "habló", "reloj", "vivir",
     ];
     for s in data {
         let w: Word = s.into();
@@ -40,9 +31,7 @@ fn test_paroxytone() {
 
 #[test]
 fn test_proparoxytones() {
-    let data = vec![
-        "esdrújula", "teléfono", "árboles"
-    ];
+    let data = vec!["esdrújula", "teléfono", "árboles"];
     for s in data {
         let w: Word = s.into();
         assert_eq!(w.stress.0, StressType::Proparoxytone);
@@ -51,12 +40,7 @@ fn test_proparoxytones() {
 
 #[test]
 fn test_superproparoxytone() {
-    let data = vec![
-        "tráiganosla",
-        "gíratelo",
-        "rápidamente",
-        "ávidamente",
-    ];
+    let data = vec!["tráiganosla", "gíratelo", "rápidamente", "ávidamente"];
     for s in data {
         let w: Word = s.into();
         assert_eq!(w.stress.0, StressType::Superproparoxytone);

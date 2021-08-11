@@ -22,7 +22,10 @@ fn diptongos() {
         "viu-da",
         "pié",
     ];
-    let src = data.iter().map(|s| (s.replace("-", ""), s.to_string())).collect::<Vec<(String, String)>>();
+    let src = data
+        .iter()
+        .map(|s| (s.replace("-", ""), s.to_string()))
+        .collect::<Vec<(String, String)>>();
     for (s, d) in src {
         let w: Word = s.as_str().into();
         let st = w.syllables.iter().map(|s| s.to_string());
@@ -70,7 +73,10 @@ fn hiatos() {
         "a-cen-tú-o",
         "du-un-vi-ro",
     ];
-    let src = data.iter().map(|s| (s.replace("-", ""), s.to_string())).collect::<Vec<(String, String)>>();
+    let src = data
+        .iter()
+        .map(|s| (s.replace("-", ""), s.to_string()))
+        .collect::<Vec<(String, String)>>();
     for (s, d) in src {
         let w: Word = s.as_str().into();
         let st = w.syllables.iter().map(|s| s.to_string());
@@ -97,7 +103,10 @@ fn triptongos() {
         "Huey-pox-tla",
         "Miau",
     ];
-    let src = data.iter().map(|s| (s.replace("-", ""), s.to_string())).collect::<Vec<(String, String)>>();
+    let src = data
+        .iter()
+        .map(|s| (s.replace("-", ""), s.to_string()))
+        .collect::<Vec<(String, String)>>();
     for (s, d) in src {
         let w: Word = s.as_str().into();
         let st = w.syllables.iter().map(|s| s.to_string());
@@ -107,10 +116,11 @@ fn triptongos() {
 
 #[test]
 fn no_triptongos() {
-    let data = vec![
-        "lim-pia-ú-ñas", "vi-ví-ais"
-    ];
-    let src = data.iter().map(|s| (s.replace("-", ""), s.to_string())).collect::<Vec<(String, String)>>();
+    let data = vec!["lim-pia-ú-ñas", "vi-ví-ais"];
+    let src = data
+        .iter()
+        .map(|s| (s.replace("-", ""), s.to_string()))
+        .collect::<Vec<(String, String)>>();
     for (s, d) in src {
         let w: Word = s.as_str().into();
         let st = w.syllables.iter().map(|s| s.to_string());
@@ -122,41 +132,44 @@ fn no_triptongos() {
 fn ad_hoc() {
     // Most from https://github.com/vic/silabas.js
     let data = vec![
-        // "va-te",
+        "va-te",
         "su-yo",
-        // "ár-bol",
-        // "pa-la-bra",
-        // "es-to-cól-mo",
-        // "i-dí-li-co",
-        // "i-rru-ma-ción",
-        // "i-ne-fa-ble",
-        // "hi-po-pó-ta-mo",
-        // "ay",
-        // "hay",
-        // "ma-guey",
-        // "a-buha-do",
-        // "ac-mé",
-        // "hai-ga",
-        // "mam-po-rre-ro",
-        // "mur-cié-la-go",
-        // "ple-io-tro-pí-a",
-        // "Ab-yec-ción",
-        // "A-he-rro-jar",
-        // "güe-ro",
-        // "a-ve-ri-guáis",
-        // "U-ru-guay",
-        // "huí-a",
-        // "az-ca-pot-zal-co",
-        // "va-he-e",
-        // "pte-ra-sau-rio",
-        // "por-que",
-        // "abs-tra-er",
-        // "cons-truir",
-        // "ads-cri-bir",
-        // "ads-trin-gir",
-        // "ah-re",
+        "ár-bol",
+        "pa-la-bra",
+        "es-to-cól-mo",
+        "i-dí-li-co",
+        "i-rru-ma-ción",
+        "i-ne-fa-ble",
+        "hi-po-pó-ta-mo",
+        "ay",
+        "hay",
+        "ma-guey",
+        "a-buha-do",
+        "ac-mé",
+        "hai-ga",
+        "mam-po-rre-ro",
+        "mur-cié-la-go",
+        "ple-io-tro-pí-a",
+        "Ab-yec-ción",
+        "A-he-rro-jar",
+        "güe-ro",
+        "a-ve-ri-guáis",
+        "U-ru-guay",
+        "huí-a",
+        "az-ca-pot-zal-co",
+        "va-he-e",
+        "pte-ra-sau-rio",
+        "por-que",
+        "abs-tra-er",
+        "cons-truir",
+        "ads-cri-bir",
+        "ads-trin-gir",
+        "ah-re",
     ];
-    let src = data.iter().map(|s| (s.replace("-", ""), s.to_string())).collect::<Vec<(String, String)>>();
+    let src = data
+        .iter()
+        .map(|s| (s.replace("-", ""), s.to_string()))
+        .collect::<Vec<(String, String)>>();
     for (s, d) in src {
         let w: Word = s.as_str().into();
         let st = w.syllables.iter().map(|s| s.to_string());
@@ -166,10 +179,11 @@ fn ad_hoc() {
 
 #[test]
 fn with_h() {
-    let data = vec![
-        "a-ni-hi-lar", "ma-ri-hua-na"
-    ];
-    let src = data.iter().map(|s| (s.replace("-", ""), s.to_string())).collect::<Vec<(String, String)>>();
+    let data = vec!["a-ni-hi-lar", "ma-ri-hua-na"];
+    let src = data
+        .iter()
+        .map(|s| (s.replace("-", ""), s.to_string()))
+        .collect::<Vec<(String, String)>>();
     for (s, d) in src {
         let w: Word = s.as_str().into();
         let st = w.syllables.iter().map(|s| s.to_string());

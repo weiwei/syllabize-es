@@ -18,7 +18,7 @@ use crate::char_util::Syllable;
 #[derive(PartialEq, Debug)]
 pub enum StressType {
     Oxytone,            // aguda
-    Paroxytone,         // llana
+    Paroxytone,         // llana or grave
     Proparoxytone,      // esdrújula
     Superproparoxytone, //sobresdrújula
 }
@@ -26,8 +26,8 @@ pub enum StressType {
 #[derive(PartialEq)]
 enum Position {
     None,
-    Onset,   // Dos
-    Nucleus, // dOs
+    Onset,   // Dos, ataque
+    Nucleus, // dOs, nucleo
     Coda,    // doS
 }
 
@@ -349,11 +349,11 @@ fn find_vowel_combos(syllables: &Vec<Syllable>) -> (Vec<Hiatus>, Vec<Diphthong>,
             });
         } else if syllables[index].nucleus.chars().count() == 2 {
             let dp_type: DiphthongType;
-            if dp_rising.is_match(syllables[index].nucleus.as_str()) {
+            if dp_rising.is_match(syllables[index].nucleus.to_lowercase().as_str()) {
                 dp_type = DiphthongType::Rising;
-            } else if dp_falling.is_match(syllables[index].nucleus.as_str()) {
+            } else if dp_falling.is_match(syllables[index].nucleus.to_lowercase().as_str()) {
                 dp_type = DiphthongType::Falling;
-            } else if dp_homogenous.is_match(syllables[index].nucleus.as_str()) {
+            } else if dp_homogenous.is_match(syllables[index].nucleus.to_lowercase().as_str()) {
                 dp_type = DiphthongType::Homogenous;
             } else {
                 panic!("Not a diphthong");
@@ -456,6 +456,14 @@ mod tests {
                 coda: "".to_string()
             }
         );
+    }
+
+    #[test]
+    fn test_diptongo() {
+        let word: Word = "DIALOGO".into();
+        assert_eq!(word.hiatuses.len(), 0);
+        assert_eq!(word.diphthongs.len(), 1);
+        assert_eq!(word.triphthongs.len(), 0);
     }
 
     #[bench]
