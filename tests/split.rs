@@ -165,6 +165,7 @@ fn ad_hoc() {
         "ads-cri-bir",
         "ads-trin-gir",
         "ah-re",
+        "e-lec-tro-en-ce-fa-lo-gra-fis-ta",
     ];
     let src = data
         .iter()

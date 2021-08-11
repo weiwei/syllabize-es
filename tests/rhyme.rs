@@ -3,7 +3,7 @@ use syllabize_es::Word;
 #[test]
 fn agudo() {
     let word: Word = "pié".into();
-    assert_eq!(word.rhyme, "ié");
+    assert_eq!(word.rhyme, "é");
 }
 
 #[test]

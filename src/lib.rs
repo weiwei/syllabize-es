@@ -23,6 +23,7 @@ pub enum StressType {
     Superproparoxytone, //sobresdrújula
 }
 
+// TODO:
 // pub enum StressType {
 //     Prosodic,  // Acento prosódico
 //     Orthographic,  // Acento ortográfico
@@ -97,7 +98,7 @@ impl From<&str> for Word {
         let stress = identify_stress(&syllables);
         let (hiatuses, diphthongs, triphthongs) = find_vowel_combos(&syllables);
         let tonic = syllables[stress.index].clone();
-        let rhyme = find_rhyme(&stress.kind, &syllables);
+        let rhyme = find_rhyme(stress.index, &syllables);
         Word {
             word,
             length,
@@ -300,24 +301,36 @@ fn syllabize(word: &String) -> Vec<Syllable> {
 fn identify_stress(syllables: &Vec<Syllable>) -> Stress {
     let syllable_count = syllables.len();
     if syllable_count == 1 {
-        return Stress { kind: StressType::Oxytone, index: 0};
+        return Stress {
+            kind: StressType::Oxytone,
+            index: 0,
+        };
     }
     if syllable_count > 1 && syllables[syllable_count - 1].has_accent() {
-        return Stress { kind: StressType::Oxytone, index: syllable_count - 1};
+        return Stress {
+            kind: StressType::Oxytone,
+            index: syllable_count - 1,
+        };
     }
     if syllable_count >= 2 && syllables[syllable_count - 2].has_accent() {
-        return Stress { kind: StressType::Paroxytone, index: syllable_count - 2};
+        return Stress {
+            kind: StressType::Paroxytone,
+            index: syllable_count - 2,
+        };
     }
     if syllable_count >= 3 && syllables[syllable_count - 3].has_accent() {
-        return Stress { kind: StressType::Proparoxytone, index: syllable_count - 3};
+        return Stress {
+            kind: StressType::Proparoxytone,
+            index: syllable_count - 3,
+        };
     }
     if syllable_count >= 4 {
         let mut index = syllable_count as i32 - 4;
         while index >= 0 {
             if syllables[index as usize].has_accent() {
-                return Stress { 
+                return Stress {
                     kind: StressType::Superproparoxytone,
-                    index: index as usize
+                    index: index as usize,
                 };
             }
             index -= 1;
@@ -326,10 +339,16 @@ fn identify_stress(syllables: &Vec<Syllable>) -> Stress {
 
     let last_coda = syllables[syllable_count - 1].coda.as_str();
     if last_coda != "" && last_coda != "n" && last_coda != "s" {
-        return Stress { kind: StressType::Oxytone, index: syllable_count - 1}
+        return Stress {
+            kind: StressType::Oxytone,
+            index: syllable_count - 1,
+        };
     }
 
-    return Stress { kind: StressType::Paroxytone, index: syllable_count - 2};
+    return Stress {
+        kind: StressType::Paroxytone,
+        index: syllable_count - 2,
+    };
 }
 
 fn find_vowel_combos(syllables: &Vec<Syllable>) -> (Vec<Hiatus>, Vec<Diphthong>, Vec<Triphthong>) {
@@ -392,48 +411,21 @@ fn find_vowel_combos(syllables: &Vec<Syllable>) -> (Vec<Hiatus>, Vec<Diphthong>,
     (hiatuses, diphthongs, triphthongs)
 }
 
-fn find_rhyme(stress: &StressType, syllables: &Vec<Syllable>) -> String {
-    match stress {
-        StressType::Oxytone => {
-            let last_syllable = &syllables[syllables.len() - 1];
-            let mut rhyme = last_syllable.nucleus.clone();
-            rhyme.push_str(last_syllable.coda.as_str());
-            return rhyme;
-        }
-        StressType::Paroxytone => {
-            let last_syllable = &syllables[syllables.len() - 1];
-            let next_last_syllable = &syllables[syllables.len() - 2];
-            if next_last_syllable.nucleus.chars().count() == 1 {
-                let mut rhyme = next_last_syllable.nucleus.clone();
-                rhyme.push_str(next_last_syllable.coda.as_str());
-                rhyme.push_str(last_syllable.to_string().as_str());
-                return rhyme;
-            } else {
-                let index = stress_index(next_last_syllable.nucleus.as_str());
-                let mut rhyme = next_last_syllable
-                    .nucleus
-                    .chars()
-                    .skip(index)
-                    .collect::<String>();
-                rhyme.push_str(next_last_syllable.coda.as_str());
-                rhyme.push_str(last_syllable.to_string().as_str());
-                return rhyme;
-            }
-        }
-        StressType::Proparoxytone => {
-            let last = &syllables[syllables.len() - 1];
-            let next = &syllables[syllables.len() - 2];
-            let nnext = &syllables[syllables.len() - 3];
-            let mut rhyme = nnext.nucleus.clone();
-            rhyme.push_str(nnext.coda.as_str());
-            rhyme.push_str(next.to_string().as_str());
-            rhyme.push_str(last.to_string().as_str());
-            return rhyme;
-        }
-        StressType::Superproparoxytone => {
-            return syllables[syllables.len() - 1].to_string();
-        }
+fn find_rhyme(tonic_index: usize, syllables: &Vec<Syllable>) -> String {
+    let stress_syllable = &syllables[tonic_index];
+    let tonic_vowels = stress_syllable.nucleus.chars().collect::<String>();
+    let mut rhyme = if tonic_vowels.chars().count() == 1 {
+        tonic_vowels
+    } else {
+        let index = stress_index(tonic_vowels.as_str());
+        tonic_vowels.chars().skip(index).collect::<String>()
+    };
+    rhyme.push_str(stress_syllable.coda.as_str());
+
+    for i in tonic_index + 1..syllables.len() {
+        rhyme.push_str(syllables[i].to_string().as_str())
     }
+    rhyme
 }
 
 #[cfg(test)]
@@ -448,7 +440,13 @@ mod tests {
         assert_eq!(word.syllables[0].to_string(), "pa");
         assert_eq!(word.syllables[1].to_string(), "la");
         assert_eq!(word.syllables[2].to_string(), "bra");
-        assert_eq!(word.stress, Stress { kind: StressType::Paroxytone, index: 1 });
+        assert_eq!(
+            word.stress,
+            Stress {
+                kind: StressType::Paroxytone,
+                index: 1
+            }
+        );
         assert_eq!(word.hiatuses.len(), 0);
         assert_eq!(word.diphthongs.len(), 0);
         assert_eq!(word.triphthongs.len(), 0);
