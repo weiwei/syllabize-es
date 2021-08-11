@@ -3,7 +3,6 @@ const NON_ACCENTED_VOWELS: &str = "aeiouüAEIOUÜ";
 const STRESSED_VOWELS: &str = "áéíóúaoeÁÉÍÓÚAOE";
 const WEAK_VOWELS: &str = "iuüIUÜ";
 
-
 pub trait IsVowel: private::Sealed {
     fn is_vowel(self) -> bool;
     fn is_weak_vowel(self) -> bool;
@@ -33,16 +32,17 @@ mod private {
     impl Sealed for char {}
 }
 
-
-
-
 const VOWEL_A: &str = "aáAÁ";
 const VOWEL_E: &str = "eéEÉ";
 const VOWEL_I: &str = "iíIÍ";
 const VOWEL_O: &str = "oóOÓ";
 const VOWEL_U: &str = "uúüUÚÜ";
 
-pub fn is_hiatus(a: char, b: char) -> bool {
+/// Returns true if two charactors make a hiatus.
+///
+/// A hiatus(hiato) is when two vowels are the same (with or without accent),
+/// or both are stressed vowels.
+pub fn can_form_hiatus(a: char, b: char) -> bool {
     VOWEL_A.contains(a) && VOWEL_A.contains(b)
         || VOWEL_E.contains(a) && VOWEL_E.contains(b)
         || VOWEL_I.contains(a) && VOWEL_I.contains(b)
@@ -51,7 +51,8 @@ pub fn is_hiatus(a: char, b: char) -> bool {
         || STRESSED_VOWELS.contains(a) && STRESSED_VOWELS.contains(b)
 }
 
-pub fn is_triphthong(a: char, b: char, c: char) -> bool {
+/// Returns true if three charactors make a triphthong.
+pub fn can_form_triphthong(a: char, b: char, c: char) -> bool {
     a.is_weak_vowel() && b.is_stressed_vowel() && c.is_weak_vowel()
 }
 
@@ -61,14 +62,14 @@ mod tests {
 
     #[test]
     fn test_is_triphthong() {
-        assert_eq!(is_triphthong('a', 'b', 'c'), false);
-        assert_eq!(is_triphthong('i', 'e', 'i'), true);
+        assert_eq!(can_form_triphthong('a', 'b', 'c'), false);
+        assert_eq!(can_form_triphthong('i', 'e', 'i'), true);
     }
 
     #[test]
     fn test_is_hiatus() {
-        assert_eq!(is_hiatus('a', 'b'), false);
-        assert_eq!(is_hiatus('a', 'e'), true);
+        assert_eq!(can_form_hiatus('a', 'b'), false);
+        assert_eq!(can_form_hiatus('a', 'e'), true);
     }
 
     #[test]

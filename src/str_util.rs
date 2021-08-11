@@ -6,13 +6,22 @@ const CONSONANT_BLENDS: &[&str] = &[
 
 const DIAGRAPHS: &[&str] = &["ch", "ll", "rr"];
 
-pub fn is_consonant_group(part: &str) -> bool {
-    CONSONANT_BLENDS.contains(&part) || DIAGRAPHS.contains(&part)
+/// @brief Returns true if the given string is a consonant blend or a digraph
+/// @param s The string to test
+/// @return True if the string is a consonant blend or digraph
+/// @see CONSONANT_BLENDS
+/// @see DIAGRAPHS
+pub fn is_consonant_group(s: &str) -> bool {
+    CONSONANT_BLENDS.contains(&s) || DIAGRAPHS.contains(&s)
 }
 
-pub fn stress_index(part: &str) -> usize {
+/// @brief Returns index of the stressed vowel in the given string
+/// @param s The string to test
+/// @return Index of the stressed vowel in the string
+/// @see is_stressed_vowel
+pub fn stress_index(s: &str) -> usize {
     let mut index = 0;
-    for ch in part.chars() {
+    for ch in s.chars() {
         if ch.is_stressed_vowel() {
             break;
         }
@@ -20,7 +29,6 @@ pub fn stress_index(part: &str) -> usize {
     }
     index
 }
-
 
 #[cfg(test)]
 mod tests {

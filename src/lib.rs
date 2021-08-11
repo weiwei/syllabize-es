@@ -1,4 +1,7 @@
+#![warn(missing_docs)]
 #![feature(test)]
+
+//! Converting Spanish words into syllables, and much more!
 
 extern crate test;
 
@@ -10,18 +13,23 @@ pub mod char_util;
 pub mod str_util;
 pub mod syllable;
 
-use crate::str_util::{is_consonant_group, stress_index};
-use crate::char_util::is_hiatus;
-use crate::char_util::is_triphthong;
+use crate::char_util::can_form_hiatus;
+use crate::char_util::can_form_triphthong;
 use crate::char_util::IsVowel;
+use crate::str_util::is_consonant_group;
 use crate::syllable::Syllable;
 
+/// Types of stress
 #[derive(PartialEq, Debug)]
 pub enum StressType {
-    Oxytone,            // aguda
-    Paroxytone,         // llana or grave
-    Proparoxytone,      // esdrújula
-    Superproparoxytone, //sobresdrújula
+    /// aguda, stress at the last syllable
+    Oxytone,
+    /// llana or grave, stress at the penultimate syllable
+    Paroxytone,
+    /// esdrújula, stress at the 3rd last syllable
+    Proparoxytone,
+    /// sobresdrújula, stress at the 4th last syllable
+    Superproparoxytone,
 }
 
 // TODO:
@@ -78,6 +86,7 @@ pub struct VowelCombos {
     pub triphthongs: Vec<Triphthong>,
 }
 
+/// A parsed word that contains syllables and stress information
 #[derive()]
 pub struct Word {
     pub syllables: Vec<Syllable>,
@@ -87,7 +96,6 @@ pub struct Word {
 impl Word {
     pub fn rhyme(&self) -> String {
         let stress_syllable = &self.syllables[self.stress.index];
-        let tonic_vowels = stress_syllable.nucleus.chars().collect::<String>();
         let mut rhyme = stress_syllable.vowels_since_stress();
         rhyme.push_str(stress_syllable.coda.as_str());
 
@@ -118,7 +126,9 @@ impl Word {
                 hiatuses.push(Hiatus {
                     syllable_index: index,
                     composite,
-                    kind: if syllables[index].has_accent() || syllables[index + 1].has_accent() {
+                    kind: if syllables[index].has_accented_vowel()
+                        || syllables[index + 1].has_accented_vowel()
+                    {
                         HiatusType::Acentual
                     } else {
                         HiatusType::Simple
@@ -208,7 +218,7 @@ fn to_syllables(word: &str) -> Vec<Syllable> {
                     let next_char = chars[index];
                     if next_char.is_vowel() {
                         if syllable.nucleus.chars().count() == 1
-                            && is_hiatus(syllable.nucleus.chars().nth(0).unwrap(), next_char)
+                            && can_form_hiatus(syllable.nucleus.chars().nth(0).unwrap(), next_char)
                         {
                             syllables.push(syllable);
                             syllable = Syllable {
@@ -221,7 +231,7 @@ fn to_syllables(word: &str) -> Vec<Syllable> {
                             index += 1;
                             let after_next_char = chars[index];
                             if after_next_char.is_vowel() {
-                                if is_triphthong(
+                                if can_form_triphthong(
                                     syllable.nucleus.chars().nth(0).unwrap(),
                                     next_char,
                                     after_next_char,
@@ -268,7 +278,7 @@ fn to_syllables(word: &str) -> Vec<Syllable> {
                 syllable.nucleus.push(curr_char);
             } else if position == Position::Nucleus {
                 if syllable.nucleus.chars().count() == 1 {
-                    if is_hiatus(curr_char, syllable.nucleus.chars().nth(0).unwrap()) {
+                    if can_form_hiatus(curr_char, syllable.nucleus.chars().nth(0).unwrap()) {
                         syllables.push(syllable);
                         syllable = Syllable {
                             onset: "".to_string(),
@@ -279,7 +289,7 @@ fn to_syllables(word: &str) -> Vec<Syllable> {
                         syllable.nucleus.push(curr_char);
                     }
                 } else if syllable.nucleus.chars().count() == 2 {
-                    if is_triphthong(
+                    if can_form_triphthong(
                         syllable.nucleus.chars().nth(0).unwrap(),
                         syllable.nucleus.chars().nth(1).unwrap(),
                         curr_char,
@@ -373,19 +383,19 @@ fn identify_stress(syllables: &Vec<Syllable>) -> Stress {
             index: 0,
         };
     }
-    if syllable_count > 1 && syllables[syllable_count - 1].has_accent() {
+    if syllable_count > 1 && syllables[syllable_count - 1].has_accented_vowel() {
         return Stress {
             kind: StressType::Oxytone,
             index: syllable_count - 1,
         };
     }
-    if syllable_count >= 2 && syllables[syllable_count - 2].has_accent() {
+    if syllable_count >= 2 && syllables[syllable_count - 2].has_accented_vowel() {
         return Stress {
             kind: StressType::Paroxytone,
             index: syllable_count - 2,
         };
     }
-    if syllable_count >= 3 && syllables[syllable_count - 3].has_accent() {
+    if syllable_count >= 3 && syllables[syllable_count - 3].has_accented_vowel() {
         return Stress {
             kind: StressType::Proparoxytone,
             index: syllable_count - 3,
@@ -394,7 +404,7 @@ fn identify_stress(syllables: &Vec<Syllable>) -> Stress {
     if syllable_count >= 4 {
         let mut index = syllable_count as i32 - 4;
         while index >= 0 {
-            if syllables[index as usize].has_accent() {
+            if syllables[index as usize].has_accented_vowel() {
                 return Stress {
                     kind: StressType::Superproparoxytone,
                     index: index as usize,
@@ -470,24 +480,18 @@ mod tests {
     #[bench]
     fn bench_vowel_combos(b: &mut Bencher) {
         let word: Word = "envergadura".into();
-        b.iter(|| {
-            word.vowel_combos()
-        });
+        b.iter(|| word.vowel_combos());
     }
 
     #[bench]
     fn bench_rhyme(b: &mut Bencher) {
         let word: Word = "envergadura".into();
-        b.iter(|| {
-            word.rhyme()
-        });
+        b.iter(|| word.rhyme());
     }
 
     #[bench]
     fn bench_syllabify(b: &mut Bencher) {
         let word: Word = "envergadura".into();
-        b.iter(|| {
-            word.syllabify("-")
-        });
+        b.iter(|| word.syllabify("-"));
     }
 }
