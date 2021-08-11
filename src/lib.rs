@@ -399,9 +399,11 @@ fn find_rhyme(stress: &StressType, syllables: &Vec<Syllable>) -> String {
                 return rhyme;
             } else {
                 let index = stress_index(next_last_syllable.nucleus.as_str());
-                let mut rhyme = next_last_syllable.nucleus.as_str()
-                    [index as usize..next_last_syllable.nucleus.chars().count()]
-                    .to_string();
+                let mut rhyme = next_last_syllable
+                    .nucleus
+                    .chars()
+                    .skip(index)
+                    .collect::<String>();
                 rhyme.push_str(next_last_syllable.coda.as_str());
                 rhyme.push_str(last_syllable.to_string().as_str());
                 return rhyme;

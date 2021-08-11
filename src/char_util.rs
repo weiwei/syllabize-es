@@ -3,7 +3,7 @@
 
 pub const ACCENTED_VOWELS: &str = "áéíóúÁÉÍÓÚ";
 const NON_ACCENTED_VOWELS: &str = "aeiouüAEIOUÜ";
-const STRESSED_VOWELS: &str = "áéíóúaoe";
+const STRESSED_VOWELS: &str = "áéíóúaoeÁÉÍÓÚAOE";
 const WEAK_VOWELS: &str = "iuüIUÜ";
 const CONSONANT_BLENDS: &[&str] = &[
     "bl", "fl", "cl", "gl", "pl", "cr", "br", "tr", "gr", "fr", "pr", "dr", "tl",
@@ -64,7 +64,7 @@ impl Syllable {
     }
 }
 
-pub fn stress_index(part: &str) -> i32 {
+pub fn stress_index(part: &str) -> usize {
     let mut index = 0;
     for ch in part.chars() {
         if STRESSED_VOWELS.contains(ch) {
