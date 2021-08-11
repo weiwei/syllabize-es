@@ -28,8 +28,7 @@ fn diptongos() {
         .collect::<Vec<(String, String)>>();
     for (s, d) in src {
         let w: Word = s.as_str().into();
-        let st = w.syllables.iter().map(|s| s.to_string());
-        assert_eq!(st.collect::<Vec<String>>().join("-"), d);
+        assert_eq!(w.syllabify("-"), d);
     }
 }
 
@@ -79,8 +78,7 @@ fn hiatos() {
         .collect::<Vec<(String, String)>>();
     for (s, d) in src {
         let w: Word = s.as_str().into();
-        let st = w.syllables.iter().map(|s| s.to_string());
-        assert_eq!(st.collect::<Vec<String>>().join("-"), d);
+        assert_eq!(w.syllabify("-"), d);
     }
 }
 
@@ -109,8 +107,7 @@ fn triptongos() {
         .collect::<Vec<(String, String)>>();
     for (s, d) in src {
         let w: Word = s.as_str().into();
-        let st = w.syllables.iter().map(|s| s.to_string());
-        assert_eq!(st.collect::<Vec<String>>().join("-"), d);
+        assert_eq!(w.syllabify("-"), d);
     }
 }
 
@@ -123,8 +120,7 @@ fn no_triptongos() {
         .collect::<Vec<(String, String)>>();
     for (s, d) in src {
         let w: Word = s.as_str().into();
-        let st = w.syllables.iter().map(|s| s.to_string());
-        assert_eq!(st.collect::<Vec<String>>().join("-"), d);
+        assert_eq!(w.syllabify("-"), d);
     }
 }
 
@@ -132,6 +128,7 @@ fn no_triptongos() {
 fn ad_hoc() {
     // Most from https://github.com/vic/silabas.js
     let data = vec![
+        "a",
         "va-te",
         "su-yo",
         "ár-bol",
@@ -173,8 +170,7 @@ fn ad_hoc() {
         .collect::<Vec<(String, String)>>();
     for (s, d) in src {
         let w: Word = s.as_str().into();
-        let st = w.syllables.iter().map(|s| s.to_string());
-        assert_eq!(st.collect::<Vec<String>>().join("-"), d);
+        assert_eq!(w.syllabify("-"), d);
     }
 }
 
@@ -187,7 +183,6 @@ fn with_h() {
         .collect::<Vec<(String, String)>>();
     for (s, d) in src {
         let w: Word = s.as_str().into();
-        let st = w.syllables.iter().map(|s| s.to_string());
-        assert_eq!(st.collect::<Vec<String>>().join("-"), d);
+        assert_eq!(w.syllabify("-"), d);
     }
 }

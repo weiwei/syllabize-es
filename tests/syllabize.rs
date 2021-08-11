@@ -1,9 +1,8 @@
-use syllabize_es::{char_util::Syllable, Word};
+use syllabize_es::{syllable::Syllable, Word};
 
 #[test]
 fn vc() {
     let w: Word = "la".into();
-    assert_eq!(w.length, 2);
     assert_eq!(
         w.syllables,
         vec![Syllable {
@@ -17,7 +16,6 @@ fn vc() {
 #[test]
 fn cv() {
     let w: Word = "al".into();
-    assert_eq!(w.length, 2);
     assert_eq!(
         w.syllables,
         vec![Syllable {
@@ -31,7 +29,6 @@ fn cv() {
 #[test]
 fn cvy() {
     let w: Word = "doy".into();
-    assert_eq!(w.length, 3);
     assert_eq!(
         w.syllables,
         vec![Syllable {
@@ -45,7 +42,6 @@ fn cvy() {
 #[test]
 fn cvv() {
     let w: Word = "duo".into();
-    assert_eq!(w.length, 3);
     assert_eq!(
         w.syllables,
         vec![Syllable {
@@ -59,7 +55,6 @@ fn cvv() {
 #[test]
 fn cvvy() {
     let w: Word = "buey".into();
-    assert_eq!(w.length, 4);
     assert_eq!(
         w.syllables,
         vec![Syllable {

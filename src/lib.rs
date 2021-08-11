@@ -7,13 +7,14 @@ use std::usize;
 use test::Bencher;
 
 pub mod char_util;
+pub mod str_util;
+pub mod syllable;
 
-use crate::char_util::is_consonant_group;
+use crate::str_util::{is_consonant_group, stress_index};
 use crate::char_util::is_hiatus;
 use crate::char_util::is_triphthong;
-use crate::char_util::stress_index;
 use crate::char_util::IsVowel;
-use crate::char_util::Syllable;
+use crate::syllable::Syllable;
 
 #[derive(PartialEq, Debug)]
 pub enum StressType {
@@ -71,49 +72,115 @@ pub struct Stress {
     pub index: usize,
 }
 
-#[derive()]
-pub struct Word {
-    pub word: String,
-    pub length: usize,
-    pub syllables: Vec<Syllable>,
-    pub stress: Stress,
-    pub rhyme: String,
-    pub tonic: Syllable,
+pub struct VowelCombos {
     pub hiatuses: Vec<Hiatus>,
     pub diphthongs: Vec<Diphthong>,
     pub triphthongs: Vec<Triphthong>,
 }
 
+#[derive()]
+pub struct Word {
+    pub syllables: Vec<Syllable>,
+    pub stress: Stress,
+}
+
 impl Word {
-    pub fn stress(&self) -> Stress {
-        return identify_stress(&self.syllables);
+    pub fn rhyme(&self) -> String {
+        let stress_syllable = &self.syllables[self.stress.index];
+        let tonic_vowels = stress_syllable.nucleus.chars().collect::<String>();
+        let mut rhyme = stress_syllable.vowels_since_stress();
+        rhyme.push_str(stress_syllable.coda.as_str());
+
+        for i in self.stress.index + 1..self.syllables.len() {
+            rhyme.push_str(&self.syllables[i].to_string().as_str())
+        }
+        rhyme
+    }
+
+    pub fn vowel_combos(&self) -> VowelCombos {
+        let syllables = &self.syllables;
+        let mut index = 0;
+        let mut hiatuses = vec![];
+        let mut diphthongs = vec![];
+        let mut triphthongs = vec![];
+        let dp_rising = Regex::new("[iíuúü][aáeéoó]").unwrap();
+        let dp_falling = Regex::new("[aáeéoó][iíuúüy]").unwrap();
+        let dp_homogenous = Regex::new("[iíuúü][iíuúüy]").unwrap();
+        while index < syllables.len() {
+            if syllables[index].coda == ""
+                && syllables[index].nucleus.chars().count() == 1
+                && index + 1 < syllables.len()
+                && (syllables[index + 1].onset == "" || syllables[index + 1].onset == "h")
+                && syllables[index + 1].nucleus.chars().count() == 1
+            {
+                let mut composite = syllables[index].nucleus.clone();
+                composite.push_str(syllables[index + 1].nucleus.as_str());
+                hiatuses.push(Hiatus {
+                    syllable_index: index,
+                    composite,
+                    kind: if syllables[index].has_accent() || syllables[index + 1].has_accent() {
+                        HiatusType::Acentual
+                    } else {
+                        HiatusType::Simple
+                    },
+                });
+            } else if syllables[index].nucleus.chars().count() == 2 {
+                let dp_type: DiphthongType;
+                if dp_rising.is_match(syllables[index].nucleus.to_lowercase().as_str()) {
+                    dp_type = DiphthongType::Rising;
+                } else if dp_falling.is_match(syllables[index].nucleus.to_lowercase().as_str()) {
+                    dp_type = DiphthongType::Falling;
+                } else if dp_homogenous.is_match(syllables[index].nucleus.to_lowercase().as_str()) {
+                    dp_type = DiphthongType::Homogenous;
+                } else {
+                    panic!("Not a diphthong");
+                }
+                diphthongs.push(Diphthong {
+                    syllable_index: index,
+                    kind: dp_type,
+                    composite: syllables[index].nucleus.clone(),
+                });
+            } else if syllables[index].nucleus.chars().count() == 3 {
+                triphthongs.push(Triphthong {
+                    syllable_index: index,
+                    composite: syllables[index].nucleus.clone(),
+                });
+            } else if syllables[index].coda == ""
+                && syllables[index].nucleus.chars().count() == 2
+                && index + 1 < syllables.len()
+                && (syllables[index + 1].onset == "" || syllables[index + 1].onset == "h")
+                && syllables[index + 1].nucleus.chars().count() == 1
+            {
+                // ???
+            }
+            index += 1;
+        }
+        VowelCombos {
+            hiatuses,
+            diphthongs,
+            triphthongs,
+        }
+    }
+
+    pub fn syllabify(&self, delimiter: &str) -> String {
+        return self
+            .syllables
+            .iter()
+            .map(|s| s.to_string())
+            .collect::<Vec<String>>()
+            .join(delimiter);
     }
 }
 
 impl From<&str> for Word {
     fn from(item: &str) -> Self {
-        let word = item.to_owned();
-        let length = word.chars().count();
-        let syllables = syllabize(&word);
+        let syllables = to_syllables(item);
         let stress = identify_stress(&syllables);
-        let (hiatuses, diphthongs, triphthongs) = find_vowel_combos(&syllables);
-        let tonic = syllables[stress.index].clone();
-        let rhyme = find_rhyme(stress.index, &syllables);
-        Word {
-            word,
-            length,
-            syllables,
-            stress,
-            hiatuses,
-            diphthongs,
-            triphthongs,
-            tonic,
-            rhyme,
-        }
+        Word { syllables, stress }
     }
 }
 
-fn syllabize(word: &String) -> Vec<Syllable> {
+fn to_syllables(word: &str) -> Vec<Syllable> {
     let mut index = 0;
     let mut position = Position::None;
     let mut syllable = Syllable {
@@ -351,83 +418,6 @@ fn identify_stress(syllables: &Vec<Syllable>) -> Stress {
     };
 }
 
-fn find_vowel_combos(syllables: &Vec<Syllable>) -> (Vec<Hiatus>, Vec<Diphthong>, Vec<Triphthong>) {
-    let mut index = 0;
-    let mut hiatuses = vec![];
-    let mut diphthongs = vec![];
-    let mut triphthongs = vec![];
-    let dp_rising = Regex::new("[iíuúü][aáeéoó]").unwrap();
-    let dp_falling = Regex::new("[aáeéoó][iíuúüy]").unwrap();
-    let dp_homogenous = Regex::new("[iíuúü][iíuúüy]").unwrap();
-    while index < syllables.len() {
-        if syllables[index].coda == ""
-            && syllables[index].nucleus.chars().count() == 1
-            && index + 1 < syllables.len()
-            && (syllables[index + 1].onset == "" || syllables[index + 1].onset == "h")
-            && syllables[index + 1].nucleus.chars().count() == 1
-        {
-            let mut composite = syllables[index].nucleus.clone();
-            composite.push_str(syllables[index + 1].nucleus.as_str());
-            hiatuses.push(Hiatus {
-                syllable_index: index,
-                composite,
-                kind: if syllables[index].has_accent() || syllables[index + 1].has_accent() {
-                    HiatusType::Acentual
-                } else {
-                    HiatusType::Simple
-                },
-            });
-        } else if syllables[index].nucleus.chars().count() == 2 {
-            let dp_type: DiphthongType;
-            if dp_rising.is_match(syllables[index].nucleus.to_lowercase().as_str()) {
-                dp_type = DiphthongType::Rising;
-            } else if dp_falling.is_match(syllables[index].nucleus.to_lowercase().as_str()) {
-                dp_type = DiphthongType::Falling;
-            } else if dp_homogenous.is_match(syllables[index].nucleus.to_lowercase().as_str()) {
-                dp_type = DiphthongType::Homogenous;
-            } else {
-                panic!("Not a diphthong");
-            }
-            diphthongs.push(Diphthong {
-                syllable_index: index,
-                kind: dp_type,
-                composite: syllables[index].nucleus.clone(),
-            });
-        } else if syllables[index].nucleus.chars().count() == 3 {
-            triphthongs.push(Triphthong {
-                syllable_index: index,
-                composite: syllables[index].nucleus.clone(),
-            });
-        } else if syllables[index].coda == ""
-            && syllables[index].nucleus.chars().count() == 2
-            && index + 1 < syllables.len()
-            && (syllables[index + 1].onset == "" || syllables[index + 1].onset == "h")
-            && syllables[index + 1].nucleus.chars().count() == 1
-        {
-            // ???
-        }
-        index += 1;
-    }
-    (hiatuses, diphthongs, triphthongs)
-}
-
-fn find_rhyme(tonic_index: usize, syllables: &Vec<Syllable>) -> String {
-    let stress_syllable = &syllables[tonic_index];
-    let tonic_vowels = stress_syllable.nucleus.chars().collect::<String>();
-    let mut rhyme = if tonic_vowels.chars().count() == 1 {
-        tonic_vowels
-    } else {
-        let index = stress_index(tonic_vowels.as_str());
-        tonic_vowels.chars().skip(index).collect::<String>()
-    };
-    rhyme.push_str(stress_syllable.coda.as_str());
-
-    for i in tonic_index + 1..syllables.len() {
-        rhyme.push_str(syllables[i].to_string().as_str())
-    }
-    rhyme
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -435,8 +425,6 @@ mod tests {
     #[test]
     fn test_init() {
         let word: Word = "palabra".into();
-        assert_eq!(word.word, "palabra");
-        assert_eq!(word.length, 7);
         assert_eq!(word.syllables[0].to_string(), "pa");
         assert_eq!(word.syllables[1].to_string(), "la");
         assert_eq!(word.syllables[2].to_string(), "bra");
@@ -447,40 +435,59 @@ mod tests {
                 index: 1
             }
         );
-        assert_eq!(word.hiatuses.len(), 0);
-        assert_eq!(word.diphthongs.len(), 0);
-        assert_eq!(word.triphthongs.len(), 0);
-        assert_eq!(word.rhyme, "abra".to_string());
+        let vowel_combos = word.vowel_combos();
+        assert_eq!(vowel_combos.hiatuses.len(), 0);
+        assert_eq!(vowel_combos.diphthongs.len(), 0);
+        assert_eq!(vowel_combos.triphthongs.len(), 0);
+        assert_eq!(word.rhyme(), "abra".to_string());
     }
 
     #[test]
     fn test_hiato() {
         let word: Word = "lee".into();
-        assert_eq!(word.hiatuses.len(), 1);
-        assert_eq!(word.diphthongs.len(), 0);
-        assert_eq!(word.triphthongs.len(), 0);
-        assert_eq!(
-            word.tonic,
-            Syllable {
-                onset: "l".to_string(),
-                nucleus: "e".to_string(),
-                coda: "".to_string()
-            }
-        );
+        let vowel_combos = word.vowel_combos();
+        assert_eq!(vowel_combos.hiatuses.len(), 1);
+        assert_eq!(vowel_combos.diphthongs.len(), 0);
+        assert_eq!(vowel_combos.triphthongs.len(), 0);
     }
 
     #[test]
     fn test_diptongo() {
         let word: Word = "DIALOGO".into();
-        assert_eq!(word.hiatuses.len(), 0);
-        assert_eq!(word.diphthongs.len(), 1);
-        assert_eq!(word.triphthongs.len(), 0);
+        let vowel_combos = word.vowel_combos();
+        assert_eq!(vowel_combos.hiatuses.len(), 0);
+        assert_eq!(vowel_combos.diphthongs.len(), 1);
+        assert_eq!(vowel_combos.triphthongs.len(), 0);
     }
 
     #[bench]
     fn bench_wordify(b: &mut Bencher) {
         b.iter(|| {
-            let word: Word = "envergadura".into();
+            let _word: Word = "envergadura".into();
+        });
+    }
+
+    #[bench]
+    fn bench_vowel_combos(b: &mut Bencher) {
+        let word: Word = "envergadura".into();
+        b.iter(|| {
+            word.vowel_combos()
+        });
+    }
+
+    #[bench]
+    fn bench_rhyme(b: &mut Bencher) {
+        let word: Word = "envergadura".into();
+        b.iter(|| {
+            word.rhyme()
+        });
+    }
+
+    #[bench]
+    fn bench_syllabify(b: &mut Bencher) {
+        let word: Word = "envergadura".into();
+        b.iter(|| {
+            word.syllabify("-")
         });
     }
 }

@@ -1,20 +1,14 @@
-// #![feature(test)]
-// #![feature(core::iter::traits::collect::Extend)]
-
-pub const ACCENTED_VOWELS: &str = "áéíóúÁÉÍÓÚ";
+const ACCENTED_VOWELS: &str = "áéíóúÁÉÍÓÚ";
 const NON_ACCENTED_VOWELS: &str = "aeiouüAEIOUÜ";
 const STRESSED_VOWELS: &str = "áéíóúaoeÁÉÍÓÚAOE";
 const WEAK_VOWELS: &str = "iuüIUÜ";
-const CONSONANT_BLENDS: &[&str] = &[
-    "bl", "fl", "cl", "gl", "pl", "cr", "br", "tr", "gr", "fr", "pr", "dr", "tl",
-];
 
-const DIAGRAPHS: &[&str] = &["ch", "ll", "rr"];
 
 pub trait IsVowel: private::Sealed {
     fn is_vowel(self) -> bool;
     fn is_weak_vowel(self) -> bool;
     fn is_stressed_vowel(self) -> bool;
+    fn is_accented_vowel(self) -> bool;
 }
 
 impl IsVowel for char {
@@ -27,6 +21,9 @@ impl IsVowel for char {
     fn is_stressed_vowel(self) -> bool {
         STRESSED_VOWELS.contains(self)
     }
+    fn is_accented_vowel(self) -> bool {
+        ACCENTED_VOWELS.contains(self)
+    }
 }
 
 mod private {
@@ -36,44 +33,8 @@ mod private {
     impl Sealed for char {}
 }
 
-pub fn is_consonant_group(part: &str) -> bool {
-    CONSONANT_BLENDS.contains(&part) || DIAGRAPHS.contains(&part)
-}
 
-#[derive(Debug, Clone, PartialEq)]
-pub struct Syllable {
-    pub onset: String,
-    pub nucleus: String,
-    pub coda: String,
-}
 
-impl Syllable {
-    pub fn to_string(&self) -> String {
-        let mut result = String::from(&self.onset);
-        result.push_str(self.nucleus.as_str());
-        result.push_str(self.coda.as_str());
-        result
-    }
-    pub fn has_accent(&self) -> bool {
-        for c in self.nucleus.chars().into_iter() {
-            if ACCENTED_VOWELS.contains(c) {
-                return true;
-            }
-        }
-        false
-    }
-}
-
-pub fn stress_index(part: &str) -> usize {
-    let mut index = 0;
-    for ch in part.chars() {
-        if STRESSED_VOWELS.contains(ch) {
-            break;
-        }
-        index += 1;
-    }
-    index
-}
 
 const VOWEL_A: &str = "aáAÁ";
 const VOWEL_E: &str = "eéEÉ";
@@ -114,15 +75,5 @@ mod tests {
     fn test_is_vowel() {
         assert_eq!('e'.is_vowel(), true);
         assert_eq!('f'.is_vowel(), false);
-    }
-
-    #[test]
-    fn to_string_works() {
-        let s = Syllable {
-            onset: "b".to_string(),
-            nucleus: "a".to_string(),
-            coda: "t".to_string(),
-        };
-        assert_eq!(s.to_string(), "bat");
     }
 }
