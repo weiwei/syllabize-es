@@ -2,6 +2,59 @@
 #![feature(test)]
 
 //! Converting Spanish words into syllables, and much more!
+//!
+//! # Exmples
+//! ```
+//! use syllabize_es::{syllable::Syllable, Word, StressType, DiphthongType};
+//!
+//! // Convert a word into syllabized struct
+//! let word: Word = "construir".into();
+//!
+//! // Number of syllables
+//! assert_eq!(word.syllables.len(), 2);
+//!
+//! // First syllable, in string form
+//! assert_eq!(word.syllables[0].to_string(), "cons");
+//!
+//! // Second syllable, in struct form
+//! assert_eq!(
+//!     word.syllables[1],
+//!     Syllable {
+//!         onset: "tr".to_string(),
+//!         nucleus: "ui".to_string(),
+//!         coda: "r".to_string()
+//!     }
+//! );
+//!
+//! // Get syllabified string, using "-" as delimiter
+//! assert_eq!(word.syllabify("-"), "cons-truir");
+//!
+//! // Index of the stressed syllable of `word.syllables`
+//! assert_eq!(word.stress_index, 1);
+//!
+//! // Named type of the stress
+//! assert_eq!(word.stress(), StressType::Oxytone);
+//!
+//! // All existing vowel combinations
+//! let vowel_combos = word.vowel_combos();
+//!
+//! // The word doesn't contain hiatuses or triphthongs
+//! assert_eq!(vowel_combos.hiatuses.len(), 0);
+//! assert_eq!(vowel_combos.triphthongs.len(), 0);
+//!
+//! // But it contains a diphthong
+//! assert_eq!(vowel_combos.diphthongs.len(), 1);
+//!
+//! let dp = &vowel_combos.diphthongs[0];
+//! // All its attributes
+//! assert_eq!(dp.syllable_index, 1);
+//! assert_eq!(dp.kind, DiphthongType::Homogenous);
+//! assert_eq!(dp.composite, "ui");
+//!
+//! // The rhyming part of the word
+//! assert_eq!(word.rhyme(), "ir");
+//! ```
+//!
 
 extern crate test;
 
@@ -28,7 +81,7 @@ pub enum StressType {
     Paroxytone,
     /// esdrújula, stress at the 3rd last syllable
     Proparoxytone,
-    /// sobresdrújula, stress at the 4th last syllable
+    /// sobresdrújula, stress at the 4th last syllable or earlier
     Superproparoxytone,
 }
 
@@ -46,38 +99,34 @@ enum Position {
     Coda,    // doS
 }
 
-enum HiatusType {
+#[derive(PartialEq, Debug)]
+pub enum HiatusType {
     Simple,
     Acentual,
 }
 
-enum DiphthongType {
+#[derive(PartialEq, Debug)]
+pub enum DiphthongType {
     Rising,     // Creciente
     Falling,    // Decrescente
     Homogenous, // Homogéneo o Anticreciente
 }
 
 pub struct Hiatus {
-    syllable_index: usize,
-    composite: String,
-    kind: HiatusType,
+    pub syllable_index: usize,
+    pub composite: String,
+    pub kind: HiatusType,
 }
 
 pub struct Diphthong {
-    syllable_index: usize,
-    composite: String,
-    kind: DiphthongType,
+    pub syllable_index: usize,
+    pub composite: String,
+    pub kind: DiphthongType,
 }
 
 pub struct Triphthong {
-    syllable_index: usize,
-    composite: String,
-}
-
-#[derive(PartialEq, Debug)]
-pub struct Stress {
-    pub kind: StressType,
-    pub index: usize,
+    pub syllable_index: usize,
+    pub composite: String,
 }
 
 pub struct VowelCombos {
@@ -90,16 +139,16 @@ pub struct VowelCombos {
 #[derive()]
 pub struct Word {
     pub syllables: Vec<Syllable>,
-    pub stress: Stress,
+    pub stress_index: usize,
 }
 
 impl Word {
     pub fn rhyme(&self) -> String {
-        let stress_syllable = &self.syllables[self.stress.index];
+        let stress_syllable = &self.syllables[self.stress_index];
         let mut rhyme = stress_syllable.vowels_since_stress();
         rhyme.push_str(stress_syllable.coda.as_str());
 
-        for i in self.stress.index + 1..self.syllables.len() {
+        for i in self.stress_index + 1..self.syllables.len() {
             rhyme.push_str(&self.syllables[i].to_string().as_str())
         }
         rhyme
@@ -172,6 +221,17 @@ impl Word {
         }
     }
 
+    pub fn stress(&self) -> StressType {
+        let d = self.syllables.len() - 1 - self.stress_index;
+        match d {
+            0 => StressType::Oxytone,
+            1 => StressType::Paroxytone,
+            2 => StressType::Proparoxytone,
+            3.. => StressType::Superproparoxytone,
+            _ => panic!("Invalid stress count {}", d),
+        }
+    }
+
     pub fn syllabify(&self, delimiter: &str) -> String {
         return self
             .syllables
@@ -185,8 +245,11 @@ impl Word {
 impl From<&str> for Word {
     fn from(item: &str) -> Self {
         let syllables = to_syllables(item);
-        let stress = identify_stress(&syllables);
-        Word { syllables, stress }
+        let stress_index = identify_stress(&syllables);
+        Word {
+            syllables,
+            stress_index,
+        }
     }
 }
 
@@ -375,40 +438,25 @@ fn to_syllables(word: &str) -> Vec<Syllable> {
     syllables
 }
 
-fn identify_stress(syllables: &Vec<Syllable>) -> Stress {
+fn identify_stress(syllables: &Vec<Syllable>) -> usize {
     let syllable_count = syllables.len();
     if syllable_count == 1 {
-        return Stress {
-            kind: StressType::Oxytone,
-            index: 0,
-        };
+        return 0;
     }
     if syllable_count > 1 && syllables[syllable_count - 1].has_accented_vowel() {
-        return Stress {
-            kind: StressType::Oxytone,
-            index: syllable_count - 1,
-        };
+        return syllable_count - 1;
     }
     if syllable_count >= 2 && syllables[syllable_count - 2].has_accented_vowel() {
-        return Stress {
-            kind: StressType::Paroxytone,
-            index: syllable_count - 2,
-        };
+        return syllable_count - 2;
     }
     if syllable_count >= 3 && syllables[syllable_count - 3].has_accented_vowel() {
-        return Stress {
-            kind: StressType::Proparoxytone,
-            index: syllable_count - 3,
-        };
+        return syllable_count - 3;
     }
     if syllable_count >= 4 {
-        let mut index = syllable_count as i32 - 4;
+        let mut index = syllable_count as i8 - 4;
         while index >= 0 {
             if syllables[index as usize].has_accented_vowel() {
-                return Stress {
-                    kind: StressType::Superproparoxytone,
-                    index: index as usize,
-                };
+                return index as usize;
             }
             index -= 1;
         }
@@ -416,16 +464,10 @@ fn identify_stress(syllables: &Vec<Syllable>) -> Stress {
 
     let last_coda = syllables[syllable_count - 1].coda.as_str();
     if last_coda != "" && last_coda != "n" && last_coda != "s" {
-        return Stress {
-            kind: StressType::Oxytone,
-            index: syllable_count - 1,
-        };
+        return syllable_count - 1;
     }
 
-    return Stress {
-        kind: StressType::Paroxytone,
-        index: syllable_count - 2,
-    };
+    syllable_count - 2
 }
 
 #[cfg(test)]
@@ -434,22 +476,30 @@ mod tests {
 
     #[test]
     fn test_init() {
-        let word: Word = "palabra".into();
-        assert_eq!(word.syllables[0].to_string(), "pa");
-        assert_eq!(word.syllables[1].to_string(), "la");
-        assert_eq!(word.syllables[2].to_string(), "bra");
+        let word: Word = "construir".into();
+        assert_eq!(word.syllables.len(), 2);
+        assert_eq!(word.syllables[0].to_string(), "cons");
+        assert_eq!(word.syllables[1].to_string(), "truir");
         assert_eq!(
-            word.stress,
-            Stress {
-                kind: StressType::Paroxytone,
-                index: 1
+            word.syllables[1],
+            Syllable {
+                onset: "tr".to_string(),
+                nucleus: "ui".to_string(),
+                coda: "r".to_string()
             }
         );
+        assert_eq!(word.syllabify("-"), "cons-truir");
+        assert_eq!(word.stress_index, 1);
+        assert_eq!(word.stress(), StressType::Oxytone);
         let vowel_combos = word.vowel_combos();
         assert_eq!(vowel_combos.hiatuses.len(), 0);
-        assert_eq!(vowel_combos.diphthongs.len(), 0);
+        assert_eq!(vowel_combos.diphthongs.len(), 1);
+        let dp = &vowel_combos.diphthongs[0];
+        assert_eq!(dp.syllable_index, 1);
+        assert_eq!(dp.kind, DiphthongType::Homogenous);
+        assert_eq!(dp.composite, "ui");
         assert_eq!(vowel_combos.triphthongs.len(), 0);
-        assert_eq!(word.rhyme(), "abra".to_string());
+        assert_eq!(word.rhyme(), "ir");
     }
 
     #[test]

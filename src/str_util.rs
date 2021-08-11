@@ -27,7 +27,12 @@ pub fn stress_index(s: &str) -> usize {
         }
         index += 1;
     }
-    index
+    if index == s.len() {
+        // No stressed vowel, take the last, eg. "i" of "ui".
+        index - 1
+    } else {
+        index
+    }
 }
 
 #[cfg(test)]
@@ -38,5 +43,11 @@ mod tests {
     fn test_is_consonant_group() {
         assert!(is_consonant_group("cl"));
         assert!(!is_consonant_group("cy"));
+    }
+
+    #[test]
+    fn test_stress_index() {
+        assert_eq!(stress_index("ui"), 1);
+        assert_eq!(stress_index("ai"), 0);
     }
 }

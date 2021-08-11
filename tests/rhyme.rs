@@ -7,6 +7,12 @@ fn agudo() {
 }
 
 #[test]
+fn agudo2() {
+    let word: Word = "huir".into();
+    assert_eq!(word.rhyme(), "ir");
+}
+
+#[test]
 fn llano() {
     let word: Word = "ciento".into();
     assert_eq!(word.rhyme(), "ento");
