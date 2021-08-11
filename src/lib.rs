@@ -1,4 +1,4 @@
-#![warn(missing_docs)]
+// #![warn(missing_docs)]
 #![feature(test)]
 
 //! Converting Spanish words into syllables, and much more!
