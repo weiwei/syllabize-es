@@ -2,6 +2,17 @@
 
 Turns Spanish words into syllables, and much more.
 
+## Intro
+
+The package tries to duplicate most of the functions from [Silabeador TIP](https://tulengua.es/silabas/) and provide some more:
+
+* Dividing words into syllables.
+* Identify the stress.
+* Find diphthongs, triphthongs, and hiatuses, and provide detailed info about them.
+* Finding the rhyming part of a word.
+
+It is tested against a comprehensive dataset, so the package should be quite reliable.
+
 ## Example
 
 ```rust
@@ -55,9 +66,30 @@ assert_eq!(dp.composite, "ui");
 assert_eq!(word.rhyme(), "ir");
 ```
 
-A simple command line utility is also provided:
+## CLI Example
 
 ```shell-session
 $ syllabize palabra
 pa-la-bra
 ```
+
+## Limitations and TODOs
+
+Some attributes aren't provided because they are trivial to tell, without syllabizing a word:
+
+* Length of a word.
+* Tipo de acento: prosódico(has no accent mark) o ortográfico(has an accent mark). 
+
+Some attributes aren't provided because it's trivial to get. For example: Tonic syllable is easy to get when you have a vector of syllables and the index of the stressed syllable.
+
+Some features may be provided in future releases, for example:
+
+* Pronombre enclítico. te, lo, etc. at the trailing of a word.
+
+## License
+
+MIT.
+
+## Inspirations
+
+The package is a rewriting of the NPM package [silabacion](https://www.npmjs.com/package/silabacion), but with a simpler interface.
