@@ -49,11 +49,13 @@ impl Syllable {
     /// ```
     pub fn vowels_since_stress(&self) -> String {
         let tonic_vowels = self.nucleus.chars().collect::<String>();
-        if tonic_vowels.chars().count() == 1 {
-            tonic_vowels
-        } else {
-            let index = stress_index(tonic_vowels.as_str());
-            tonic_vowels.chars().skip(index).collect::<String>()
+        match tonic_vowels.chars().count() {
+            0 => return "".to_string(),
+            1 => return tonic_vowels,
+            _ => {
+                let index = stress_index(tonic_vowels.as_str());
+                tonic_vowels.chars().skip(index).collect::<String>()
+            }
         }
     }
 }

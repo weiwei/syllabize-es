@@ -210,6 +210,11 @@ fn to_syllables(word: &str) -> Vec<Syllable> {
     let chars: Vec<char> = word.chars().collect();
     let word_len = chars.len();
     let mut syllables: Vec<Syllable> = Vec::new();
+    if word_len == 1 {
+        syllable.nucleus.push(chars[0]);
+        syllables.push(syllable);
+        return syllables;
+    }
     loop {
         let curr_char = chars[index];
         if !curr_char.is_vowel() {

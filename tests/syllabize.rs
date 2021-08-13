@@ -1,6 +1,32 @@
 use syllabize_es::{syllable::Syllable, Word};
 
 #[test]
+fn y() {
+    let w: Word = "y".into();
+    assert_eq!(
+        w.syllables,
+        vec![Syllable {
+            onset: "".to_string(),
+            nucleus: "y".to_string(),
+            coda: "".to_string()
+        }]
+    );
+}
+
+#[test]
+fn cc() {
+    let w: Word = "nn".into();
+    assert_eq!(
+        w.syllables,
+        vec![Syllable {
+            onset: "nn".to_string(),
+            nucleus: "".to_string(),
+            coda: "".to_string()
+        }]
+    );
+}
+
+#[test]
 fn vc() {
     let w: Word = "la".into();
     assert_eq!(

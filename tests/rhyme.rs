@@ -7,6 +7,18 @@ fn agudo() {
 }
 
 #[test]
+fn corta() {
+    let word: Word = "y".into();
+    assert_eq!(word.rhyme(), "y");
+}
+
+#[test]
+fn invalida() {
+    let word: Word = "nn".into();
+    assert_eq!(word.rhyme(), "");
+}
+
+#[test]
 fn agudo2() {
     let word: Word = "huir".into();
     assert_eq!(word.rhyme(), "ir");
