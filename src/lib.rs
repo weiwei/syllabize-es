@@ -229,55 +229,69 @@ fn to_syllables(word: &str) -> Vec<Syllable> {
                     syllable.nucleus.push(curr_char);
                 } else if curr_char == 'h' {
                     index += 1;
-                    let next_char = chars[index];
-                    if next_char.is_vowel() {
-                        if syllable.nucleus.chars().count() == 1
-                            && can_form_hiatus(syllable.nucleus.chars().next().unwrap(), next_char)
-                        {
-                            syllables.push(syllable);
-                            syllable = Syllable {
-                                onset: curr_char.to_string(),
-                                nucleus: next_char.to_string(),
-                                coda: "".to_string(),
-                            };
-                            position = Position::Nucleus;
-                        } else {
-                            index += 1;
-                            let after_next_char = chars[index];
-                            if after_next_char.is_vowel() {
-                                if can_form_triphthong(
+                    if index == chars.len() {
+                        syllable.coda.push(curr_char);
+                        position = Position::Coda;
+                    } else {
+                        let next_char = chars[index];
+                        if next_char.is_vowel() {
+                            if syllable.nucleus.chars().count() == 1
+                                && can_form_hiatus(
                                     syllable.nucleus.chars().next().unwrap(),
                                     next_char,
-                                    after_next_char,
-                                ) {
-                                    // Could this happen?
-                                } else {
-                                    syllables.push(syllable);
-                                    let mut nucleus = next_char.to_string();
-                                    nucleus.push(after_next_char);
-                                    syllable = Syllable {
-                                        onset: curr_char.to_string(),
-                                        nucleus,
-                                        coda: "".to_string(),
-                                    };
-                                    position = Position::Nucleus;
-                                }
+                                )
+                            {
+                                syllables.push(syllable);
+                                syllable = Syllable {
+                                    onset: curr_char.to_string(),
+                                    nucleus: next_char.to_string(),
+                                    coda: "".to_string(),
+                                };
+                                position = Position::Nucleus;
                             } else {
-                                syllable.nucleus.push(curr_char);
-                                syllable.nucleus.push(next_char);
-                                syllable.coda.push(after_next_char);
-                                position = Position::Coda;
+                                index += 1;
+                                if index == chars.len() {
+                                    syllable.nucleus.push(curr_char);
+                                    syllable.nucleus.push(next_char);
+                                    position = Position::Coda;
+                                } else {
+                                    let after_next_char = chars[index];
+                                    if after_next_char.is_vowel() {
+                                        if can_form_triphthong(
+                                            syllable.nucleus.chars().next().unwrap(),
+                                            next_char,
+                                            after_next_char,
+                                        ) {
+                                            // Could this happen?
+                                        } else {
+                                            syllables.push(syllable);
+                                            let mut nucleus = next_char.to_string();
+                                            nucleus.push(after_next_char);
+                                            syllable = Syllable {
+                                                onset: curr_char.to_string(),
+                                                nucleus,
+                                                coda: "".to_string(),
+                                            };
+                                            position = Position::Nucleus;
+                                        }
+                                    } else {
+                                        syllable.nucleus.push(curr_char);
+                                        syllable.nucleus.push(next_char);
+                                        syllable.coda.push(after_next_char);
+                                        position = Position::Coda;
+                                    }
+                                }
                             }
+                        } else {
+                            syllable.coda.push(curr_char);
+                            syllables.push(syllable);
+                            syllable = Syllable {
+                                onset: next_char.to_string(),
+                                nucleus: "".to_string(),
+                                coda: "".to_string(),
+                            };
+                            position = Position::Onset;
                         }
-                    } else {
-                        syllable.coda.push(curr_char);
-                        syllables.push(syllable);
-                        syllable = Syllable {
-                            onset: next_char.to_string(),
-                            nucleus: "".to_string(),
-                            coda: "".to_string(),
-                        };
-                        position = Position::Onset;
                     }
                 } else {
                     syllable.coda.push(curr_char);
@@ -357,7 +371,7 @@ fn to_syllables(word: &str) -> Vec<Syllable> {
                     coda: "".to_string(),
                 };
             } else if syllable.coda.chars().count() == 3 {
-                let temp = syllable.coda.as_str()[1..3].to_string();
+                let temp = syllable.coda.chars().skip(1).collect::<String>();
                 syllable.coda = syllable.coda.chars().next().unwrap().to_string();
                 syllables.push(syllable);
                 syllable = Syllable {
@@ -366,6 +380,8 @@ fn to_syllables(word: &str) -> Vec<Syllable> {
                     coda: "".to_string(),
                 }
             } else if syllable.coda.chars().count() == 4 {
+                // indexing into &str should be fine because 4 char consonant 
+                // clusters would only contain ascii letters, i.e., no `ñ`.
                 let temp = syllable.coda.as_str()[2..4].to_string();
                 syllable.coda = syllable.coda.as_str()[0..2].to_string();
                 syllables.push(syllable);

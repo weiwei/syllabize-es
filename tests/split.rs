@@ -176,7 +176,13 @@ fn ad_hoc() {
 
 #[test]
 fn with_h() {
-    let data = vec!["a-ni-hi-lar", "ma-ri-hua-na"];
+    let data = vec![
+        "a-ni-hi-lar", 
+        "ma-ri-hua-na", 
+        "vih",  // not a word but oh well
+        "ahi",  // wrong spelling but oh well
+        "a-hí"
+        ];
     let src = data
         .iter()
         .map(|s| (s.replace("-", ""), s.to_string()))
