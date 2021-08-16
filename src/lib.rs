@@ -81,6 +81,12 @@ pub struct VowelCombos {
     pub triphthongs: Vec<Triphthong>,
 }
 
+#[derive(Clone, Copy)]
+pub enum RhymeType {
+    Consonant,
+    Assonant,
+}
+
 /// A parsed word that contains syllables and stress information
 #[derive()]
 pub struct Word {
@@ -98,6 +104,76 @@ impl Word {
             rhyme.push_str(self.syllables[i].to_string().as_str())
         }
         rhyme
+    }
+
+    pub fn rhymes_with(&self, other: &Word, kind: RhymeType) -> bool {
+        let this_syllables = &self.syllables[self.stress_index..self.syllables.len()];
+        let that_syllables = &other.syllables[other.stress_index..other.syllables.len()];
+        if this_syllables.len() != that_syllables.len() {
+            return false;
+        }
+        match kind {
+            RhymeType::Consonant => {
+                for (i, j) in this_syllables.iter().enumerate() {
+                    if i == 0 {
+                        if j.vowels_since_stress() != that_syllables[i].vowels_since_stress()
+                            || j.coda != that_syllables[i].coda
+                        {
+                            return false;
+                        }
+                    } else {
+                        if j.onset != that_syllables[i].onset
+                            || j.nucleus != that_syllables[i].nucleus
+                            || j.coda != that_syllables[i].coda
+                        {
+                            return false;
+                        }
+                    }
+                }
+                return true;
+            }
+            RhymeType::Assonant => {
+                let re_a = Regex::new("[áa]").unwrap();
+                let re_e = Regex::new("[ée]").unwrap();
+                let re_i = Regex::new("[íi]").unwrap();
+                let re_o = Regex::new("[óo]").unwrap();
+                let re_u = Regex::new("[úu]").unwrap();
+                for (i, j) in this_syllables.iter().enumerate() {
+                    if i == 0 {
+                        let k1 = j.vowels_since_stress();
+                        let k2 = that_syllables[i].vowels_since_stress();
+                        if k1 != k2 {
+                            if k1.chars().count() == k2.chars().count() {
+                                if k1.chars().count() == 1 {
+                                    let m1 = k1.chars().collect::<String>(); 
+                                    let m2 = k2.chars().collect::<String>(); 
+                                    if !((re_a.is_match(&m1) && re_a.is_match(&m2))
+                                        || (re_e.is_match(&m1) && re_e.is_match(&m2))
+                                        || (re_i.is_match(&m1) && re_i.is_match(&m2))
+                                        || (re_o.is_match(&m1) && re_o.is_match(&m2))
+                                        || (re_u.is_match(&m1) && re_u.is_match(&m2)))
+                                    {
+                                        return false;
+                                    }
+                                } else {
+                                    if !(k1.chars().collect::<String>() == k2.chars().collect::<String>()) {
+                                        return false;
+                                    }
+                                }
+                            } else {
+                                return false;
+                            }
+                        }
+        
+                    } else {
+                        if j.nucleus != that_syllables[i].nucleus {
+                            return false;
+                        }
+                    }
+                }
+                return true;
+            }
+        }
     }
 
     pub fn vowel_combos(&self) -> VowelCombos {
@@ -380,7 +456,7 @@ fn to_syllables(word: &str) -> Vec<Syllable> {
                     coda: "".to_string(),
                 }
             } else if syllable.coda.chars().count() == 4 {
-                // indexing into &str should be fine because 4 char consonant 
+                // indexing into &str should be fine because 4 char consonant
                 // clusters would only contain ascii letters, i.e., no `ñ`.
                 let temp = syllable.coda.as_str()[2..4].to_string();
                 syllable.coda = syllable.coda.as_str()[0..2].to_string();
@@ -447,6 +523,15 @@ mod tests {
         assert_eq!(vowel_combos.hiatuses.len(), 1);
         assert_eq!(vowel_combos.diphthongs.len(), 0);
         assert_eq!(vowel_combos.triphthongs.len(), 0);
+    }
+
+    #[test]
+    fn test_rhymes_with() {
+        let word: Word = "vida".into();
+        assert!(word.rhymes_with(&Word::from("frida"), RhymeType::Consonant));
+        assert!(!word.rhymes_with(&Word::from("vía"), RhymeType::Consonant));
+        assert!(word.rhymes_with(&Word::from("villa"), RhymeType::Assonant));
+        assert!(word.rhymes_with(&Word::from("vía"), RhymeType::Assonant));
     }
 
     #[test]
