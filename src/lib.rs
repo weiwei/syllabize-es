@@ -6,7 +6,10 @@
 extern crate test;
 
 use regex::Regex;
+use std::fmt;
+use std::fmt::Display;
 use std::usize;
+use str_util::loose_match;
 
 pub mod char_util;
 pub mod str_util;
@@ -88,7 +91,7 @@ pub enum RhymeType {
 }
 
 /// A parsed word that contains syllables and stress information
-#[derive()]
+#[derive(Clone, Debug)]
 pub struct Word {
     pub syllables: Vec<Syllable>,
     pub stress_index: usize,
@@ -116,28 +119,25 @@ impl Word {
             RhymeType::Consonant => {
                 for (i, j) in this_syllables.iter().enumerate() {
                     if i == 0 {
-                        if j.vowels_since_stress() != that_syllables[i].vowels_since_stress()
-                            || j.coda != that_syllables[i].coda
-                        {
+                        let k1 = j.vowels_since_stress();
+                        let k2 = that_syllables[i].vowels_since_stress();
+                        if this_syllables.len() == 1 {
+                            if !loose_match(&k1, &k2) || j.coda != that_syllables[i].coda {
+                                return false;
+                            }
+                        } else if k1 != k2 || j.coda != that_syllables[i].coda {
                             return false;
                         }
-                    } else {
-                        if j.onset != that_syllables[i].onset
-                            || j.nucleus != that_syllables[i].nucleus
-                            || j.coda != that_syllables[i].coda
-                        {
-                            return false;
-                        }
+                    } else if j.onset != that_syllables[i].onset
+                        || j.nucleus != that_syllables[i].nucleus
+                        || j.coda != that_syllables[i].coda
+                    {
+                        return false;
                     }
                 }
-                return true;
+                true
             }
             RhymeType::Assonant => {
-                let re_a = Regex::new("[áa]").unwrap();
-                let re_e = Regex::new("[ée]").unwrap();
-                let re_i = Regex::new("[íi]").unwrap();
-                let re_o = Regex::new("[óo]").unwrap();
-                let re_u = Regex::new("[úu]").unwrap();
                 for (i, j) in this_syllables.iter().enumerate() {
                     if i == 0 {
                         let k1 = j.vowels_since_stress();
@@ -145,33 +145,25 @@ impl Word {
                         if k1 != k2 {
                             if k1.chars().count() == k2.chars().count() {
                                 if k1.chars().count() == 1 {
-                                    let m1 = k1.chars().collect::<String>(); 
-                                    let m2 = k2.chars().collect::<String>(); 
-                                    if !((re_a.is_match(&m1) && re_a.is_match(&m2))
-                                        || (re_e.is_match(&m1) && re_e.is_match(&m2))
-                                        || (re_i.is_match(&m1) && re_i.is_match(&m2))
-                                        || (re_o.is_match(&m1) && re_o.is_match(&m2))
-                                        || (re_u.is_match(&m1) && re_u.is_match(&m2)))
-                                    {
+                                    let m1 = k1.chars().collect::<String>();
+                                    let m2 = k2.chars().collect::<String>();
+                                    if !loose_match(m1.as_str(), m2.as_str()) {
                                         return false;
                                     }
-                                } else {
-                                    if !(k1.chars().collect::<String>() == k2.chars().collect::<String>()) {
-                                        return false;
-                                    }
+                                } else if k1.chars().collect::<String>()
+                                    != k2.chars().collect::<String>()
+                                {
+                                    return false;
                                 }
                             } else {
                                 return false;
                             }
                         }
-        
-                    } else {
-                        if j.nucleus != that_syllables[i].nucleus {
-                            return false;
-                        }
+                    } else if j.nucleus != that_syllables[i].nucleus {
+                        return false;
                     }
                 }
-                return true;
+                true
             }
         }
     }
@@ -275,6 +267,18 @@ impl From<&str> for Word {
     }
 }
 
+impl Display for Word {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let res = self
+            .syllables
+            .iter()
+            .map(|s| s.to_string())
+            .collect::<Vec<String>>()
+            .join("");
+        write!(f, "{}", res)
+    }
+}
+
 fn to_syllables(word: &str) -> Vec<Syllable> {
     let mut index = 0;
     let mut position = Position::None;
@@ -286,6 +290,10 @@ fn to_syllables(word: &str) -> Vec<Syllable> {
     let chars: Vec<char> = word.chars().collect();
     let word_len = chars.len();
     let mut syllables: Vec<Syllable> = Vec::new();
+    if word_len == 0 {
+        syllables.push(syllable);
+        return syllables;
+    }
     if word_len == 1 {
         syllable.nucleus.push(chars[0]);
         syllables.push(syllable);
@@ -532,6 +540,24 @@ mod tests {
         assert!(!word.rhymes_with(&Word::from("vía"), RhymeType::Consonant));
         assert!(word.rhymes_with(&Word::from("villa"), RhymeType::Assonant));
         assert!(word.rhymes_with(&Word::from("vía"), RhymeType::Assonant));
+    }
+
+    #[test]
+    fn test_rhymes_with_single_syllable() {
+        let word: Word = "vi".into();
+        assert!(word.rhymes_with(&Word::from("tí"), RhymeType::Consonant));
+    }
+
+    #[test]
+    fn test_rhymes_with_y() {
+        let word: Word = "ley".into();
+        assert!(!word.rhymes_with(&Word::from("é"), RhymeType::Consonant));
+    }
+
+    #[test]
+    fn test_rhymes_no_match() {
+        let word: Word = "vi".into();
+        assert!(!word.rhymes_with(&Word::from("sid"), RhymeType::Consonant));
     }
 
     #[test]

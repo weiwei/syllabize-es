@@ -66,6 +66,19 @@ fn cvy() {
 }
 
 #[test]
+fn vy() {
+    let w: Word = "ey".into();
+    assert_eq!(
+        w.syllables,
+        vec![Syllable {
+            onset: "".to_string(),
+            nucleus: "ey".to_string(),
+            coda: "".to_string()
+        }]
+    );
+}
+
+#[test]
 fn cvv() {
     let w: Word = "duo".into();
     assert_eq!(

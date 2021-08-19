@@ -1,3 +1,5 @@
+use regex::Regex;
+
 use crate::char_util::IsVowel;
 
 const CONSONANT_BLENDS: &[&str] = &[
@@ -28,6 +30,30 @@ pub fn stress_index(s: &str) -> usize {
     }
 }
 
+pub fn loose_match(s: &str, t: &str) -> bool {
+    let regexes = vec![
+        Regex::new("^[áa]$").unwrap(),
+        Regex::new("^[ée]$").unwrap(),
+        Regex::new("^[íi]$").unwrap(),
+        Regex::new("^[óo]$").unwrap(),
+        Regex::new("^[úuü]$").unwrap(),
+        Regex::new("^a[iy]$").unwrap(),
+        Regex::new("^o[iy]$").unwrap(),
+        Regex::new("^e[iy]$").unwrap(),
+        Regex::new("^[uü][iy]$").unwrap(),
+    ];
+
+    let mut matched = false;
+
+    for re in regexes {
+        if re.is_match(s) && re.is_match(t) {
+            matched = true;
+            break;
+        }
+    }
+    matched
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -42,5 +68,11 @@ mod tests {
     fn test_stress_index() {
         assert_eq!(stress_index("ui"), 1);
         assert_eq!(stress_index("ai"), 0);
+    }
+
+    #[test]
+    fn test_loose_match() {
+        assert!(loose_match("i", "í"));
+        assert!(!loose_match("ey", "é"));
     }
 }
