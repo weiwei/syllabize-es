@@ -1,7 +1,4 @@
-const ACCENTED_VOWELS: &str = "áéíóúÁÉÍÓÚ";
-const NON_ACCENTED_VOWELS: &str = "aeiouüAEIOUÜ";
-const STRESSED_VOWELS: &str = "áéíóúaoeÁÉÍÓÚAOE";
-const WEAK_VOWELS: &str = "iuüIUÜ";
+use crate::{DiphthongType, HiatusType};
 
 pub trait IsVowel: private::Sealed {
     fn is_vowel(&self) -> bool;
@@ -12,16 +9,30 @@ pub trait IsVowel: private::Sealed {
 
 impl IsVowel for char {
     fn is_vowel(&self) -> bool {
-        ACCENTED_VOWELS.contains(*self) || NON_ACCENTED_VOWELS.contains(*self)
+        match self {
+            'a' | 'e' | 'i' | 'o' | 'u' | 'ü' | 'A' | 'E' | 'I' | 'O' | 'U' | 'Ü' => true,
+            'á' | 'é' | 'í' | 'ó' | 'ú' | 'Á' | 'É' | 'Í' | 'Ó' | 'Ú' => true,
+            _ => false,
+        }
     }
     fn is_weak_vowel(&self) -> bool {
-        WEAK_VOWELS.contains(*self)
+        match self {
+            'i' | 'u' | 'ü' | 'I' | 'U' | 'Ü' => true,
+            _ => false,
+        }
     }
     fn is_stressed_vowel(&self) -> bool {
-        STRESSED_VOWELS.contains(*self)
+        match self {
+            'á' | 'é' | 'í' | 'ó' | 'ú' | 'Á' | 'É' | 'Í' | 'Ó' | 'Ú' => true,
+            'a' | 'e' | 'o' | 'A' | 'E' | 'O' => true,
+            _ => false,
+        }
     }
     fn is_accented_vowel(&self) -> bool {
-        ACCENTED_VOWELS.contains(*self)
+        match self {
+            'á' | 'é' | 'í' | 'ó' | 'ú' | 'Á' | 'É' | 'Í' | 'Ó' | 'Ú' => true,
+            _ => false,
+        }
     }
 }
 
@@ -32,26 +43,83 @@ mod private {
     impl Sealed for char {}
 }
 
-const VOWEL_A: &str = "aáAÁ";
-const VOWEL_E: &str = "eéEÉ";
-const VOWEL_I: &str = "iíIÍ";
-const VOWEL_O: &str = "oóOÓ";
-const VOWEL_U: &str = "uúüUÚÜ";
+pub enum ComboType {
+    Diphthong(DiphthongType),
+    Hiatus(HiatusType),
+    Other,
+}
 
 /// Returns true if two charactors make a hiatus.
 ///
 /// A hiatus(hiato) is when two vowels are the same (with or without accent),
 /// or both are stressed vowels.
-pub fn can_form_hiatus(a: char, b: char) -> bool {
-    VOWEL_A.contains(a) && VOWEL_A.contains(b)
-        || VOWEL_E.contains(a) && VOWEL_E.contains(b)
-        || VOWEL_I.contains(a) && VOWEL_I.contains(b)
-        || VOWEL_O.contains(a) && VOWEL_O.contains(b)
-        || VOWEL_U.contains(a) && VOWEL_U.contains(b)
-        || STRESSED_VOWELS.contains(a) && STRESSED_VOWELS.contains(b)
+pub fn combo_type(a: char, b: char) -> ComboType {
+    match a {
+        'e' | 'a' | 'E' | 'A' | 'á' | 'é' | 'Á' | 'É' => match b {
+            'i' | 'u' | 'I' | 'U' => ComboType::Diphthong(DiphthongType::Falling),
+            'a' | 'e' | 'o' | 'ü' | 'A' | 'E' | 'O' | 'Ü' => {
+                ComboType::Hiatus(HiatusType::Simple)
+            }
+            'á' | 'é' | 'í' | 'ó' | 'ú' | 'Á' | 'É' | 'Í' | 'Ó' | 'Ú' => {
+                ComboType::Hiatus(HiatusType::Accentual)
+            }
+            _ => ComboType::Other,
+        },
+        'i' | 'I' => match b {
+            'a' | 'e' | 'o' | 'á' | 'é' | 'ó' | 'A' | 'E' | 'O' | 'Á' | 'É' | 'Ó' => {
+                ComboType::Diphthong(DiphthongType::Rising)
+            }
+            'u' | 'ú' | 'ü' | 'U' | 'Ú' | 'Ü' => {
+                ComboType::Diphthong(DiphthongType::Homogenous)
+            }
+            'i' | 'I' => ComboType::Hiatus(HiatusType::Simple),
+            'í' | 'Í' => ComboType::Hiatus(HiatusType::Accentual),
+            _ => ComboType::Other,
+        },
+        'o' | 'O' => match b {
+            'i' | 'u' | 'ü' | 'I' | 'U' | 'Ü' => ComboType::Diphthong(DiphthongType::Falling),
+            'a' | 'e' | 'o' | 'A' | 'E' | 'O' => ComboType::Hiatus(HiatusType::Simple),
+            'á' | 'é' | 'í' | 'ó' | 'ú' | 'Á' | 'É' | 'Í' | 'Ó' | 'Ú' => {
+                ComboType::Hiatus(HiatusType::Accentual)
+            }
+            _ => ComboType::Other,
+        },
+        'u' | 'ü' | 'U' | 'Ü' => match b {
+            'a' | 'e' | 'o' | 'á' | 'é' | 'ó' | 'A' | 'E' | 'O' | 'Á' | 'É' | 'Ó' => {
+                ComboType::Diphthong(DiphthongType::Rising)
+            }
+            'i' | 'I' => ComboType::Diphthong(DiphthongType::Homogenous),
+            'u' | 'ü' | 'U' | 'Ü' => ComboType::Hiatus(HiatusType::Simple),
+            'ú' | 'Ú' => ComboType::Hiatus(HiatusType::Accentual),
+            _ => ComboType::Other,
+        },
+        'í' | 'Í' | 'ú' | 'Ú' => match b {
+            'a' | 'e' | 'i' | 'u' | 'o' | 'A' | 'E' | 'I' | 'U' | 'O' => {
+                ComboType::Hiatus(HiatusType::Simple)
+            }
+            'á' | 'é' | 'í' | 'ó' | 'ú' | 'ü' | 'Á' | 'É' | 'Í' | 'Ó' | 'Ú' | 'Ü' => {
+                ComboType::Hiatus(HiatusType::Accentual)
+            }
+            _ => ComboType::Other,
+        },
+        'ó' | 'Ó' => match b {
+            'i' | 'u' | 'ü' | 'I' | 'U' | 'Ü' => ComboType::Diphthong(DiphthongType::Falling),
+            'a' | 'e' | 'o' | 'á' | 'é' | 'í' | 'ó' | 'ú' | 'A' | 'E' | 'O' | 'Á' | 'É' | 'Í'
+            | 'Ó' | 'Ú' => ComboType::Hiatus(HiatusType::Accentual),
+            _ => ComboType::Other,
+        },
+        _ => ComboType::Other,
+    }
 }
 
-/// Returns true if three charactors make a triphthong.
+pub fn can_form_hiatus(a: char, b: char) -> bool {
+    return match combo_type(a, b) {
+        ComboType::Hiatus(_) => true,
+        _ => false,
+    }
+}
+
+/// Returns true if three characters make a triphthong.
 pub fn can_form_triphthong(a: char, b: char, c: char) -> bool {
     a.is_weak_vowel() && b.is_stressed_vowel() && c.is_weak_vowel()
 }
@@ -59,11 +127,13 @@ pub fn can_form_triphthong(a: char, b: char, c: char) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use test::Bencher;
 
     #[test]
     fn test_is_triphthong() {
         assert_eq!(can_form_triphthong('a', 'b', 'c'), false);
         assert_eq!(can_form_triphthong('i', 'e', 'i'), true);
+        assert_eq!(can_form_triphthong('i', 'á', 'i'), true);
     }
 
     #[test]
@@ -76,5 +146,10 @@ mod tests {
     fn test_is_vowel() {
         assert_eq!('e'.is_vowel(), true);
         assert_eq!('f'.is_vowel(), false);
+    }
+
+    #[bench]
+    fn lower2(b: &mut Bencher) {
+        b.iter(|| 'a'.is_vowel())
     }
 }

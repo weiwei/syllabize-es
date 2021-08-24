@@ -1,6 +1,4 @@
-use regex::Regex;
-
-use crate::char_util::IsVowel;
+use crate::char_util::{IsVowel};
 
 const CONSONANT_BLENDS: &[&str] = &[
     "bl", "fl", "cl", "gl", "pl", "cr", "br", "tr", "gr", "fr", "pr", "dr", "tl",
@@ -12,6 +10,16 @@ const DIAGRAPHS: &[&str] = &["ch", "ll", "rr"];
 pub fn is_consonant_group(s: &str) -> bool {
     CONSONANT_BLENDS.contains(&s) || DIAGRAPHS.contains(&s)
 }
+
+// pub fn is_diphthong(s: &str) -> bool {
+//     let chars = s.chars();
+//     let a = chars.next().unwrap();
+//     let b = chars.next().unwrap();
+//     match combo_type(a, b) {
+//         ComboType::Diphthong(_) => true,
+//         _ => false,
+//     }
+// }
 
 /// Returns index of the stressed vowel in the given string of vowels
 pub fn stress_index(s: &str) -> usize {
@@ -31,27 +39,65 @@ pub fn stress_index(s: &str) -> usize {
 }
 
 pub fn loose_match(s: &str, t: &str) -> bool {
-    let regexes = vec![
-        Regex::new("^[áa]$").unwrap(),
-        Regex::new("^[ée]$").unwrap(),
-        Regex::new("^[íi]$").unwrap(),
-        Regex::new("^[óo]$").unwrap(),
-        Regex::new("^[úuü]$").unwrap(),
-        Regex::new("^a[iy]$").unwrap(),
-        Regex::new("^o[iy]$").unwrap(),
-        Regex::new("^e[iy]$").unwrap(),
-        Regex::new("^[uü][iy]$").unwrap(),
-    ];
-
-    let mut matched = false;
-
-    for re in regexes {
-        if re.is_match(s) && re.is_match(t) {
-            matched = true;
-            break;
-        }
+    // let s = s.chars().next().unwrap();
+    // let t = t.chars().next().unwrap();
+    match s {
+        "a" | "á" => {
+            match t {
+                "a" | "á" => true,
+                _ => false,
+            }
+        },
+        "e" | "é" => {
+            match t {
+                "e" | "é" => true,
+                _ => false,
+            }
+        },
+        "i" | "í" => {
+            match t {
+                "i" | "í" => true,
+                _ => false,
+            }
+        },
+        "o" | "ó" => {
+            match t {
+                "o" | "ó" => true,
+                _ => false,
+            }
+        },
+        "u" | "ú" | "ü" => {
+            match t {
+                "u" | "ú" | "ü" => true,
+                _ => false,
+            }
+        },
+        "ai" | "ay" => {
+            match t {
+                "ai" | "ay" => true,
+                _ => false,
+            }
+        },
+        "oi" | "oy" => {
+            match t {
+                "oi" | "oy" => true,
+                _ => false,
+            }
+        },
+        "ei" | "ey" => {
+            match t {
+                "ei" | "ey" => true,
+                _ => false,
+            }
+        },
+        "ui" | "uy" | "üi" | "üy" => {
+            match t {
+                "ui" | "uy" | "üi" | "üy" => true,
+                _ => false,
+            }
+        },
+        _ => false,
     }
-    matched
 }
 
 #[cfg(test)]

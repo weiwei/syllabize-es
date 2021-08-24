@@ -5,7 +5,7 @@
 
 extern crate test;
 
-use regex::Regex;
+use char_util::can_form_hiatus;
 use std::fmt;
 use std::fmt::Display;
 use std::usize;
@@ -15,7 +15,8 @@ pub mod char_util;
 pub mod str_util;
 pub mod syllable;
 
-use crate::char_util::can_form_hiatus;
+use crate::char_util::ComboType;
+use crate::char_util::combo_type;
 use crate::char_util::can_form_triphthong;
 use crate::char_util::IsVowel;
 use crate::str_util::is_consonant_group;
@@ -51,7 +52,7 @@ enum Position {
 #[derive(PartialEq, Debug)]
 pub enum HiatusType {
     Simple,
-    Acentual,
+    Accentual,
 }
 
 #[derive(PartialEq, Debug)]
@@ -174,9 +175,6 @@ impl Word {
         let mut hiatuses = vec![];
         let mut diphthongs = vec![];
         let mut triphthongs = vec![];
-        let dp_rising = Regex::new("[iíuúü][aáeéoó]").unwrap();
-        let dp_falling = Regex::new("[aáeéoó][iíuúüy]").unwrap();
-        let dp_homogenous = Regex::new("[iíuúü][iíuúüy]").unwrap();
         while index < syllables.len() {
             if syllables[index].coda.is_empty()
                 && syllables[index].nucleus.chars().count() == 1
@@ -192,22 +190,19 @@ impl Word {
                     kind: if syllables[index].has_accented_vowel()
                         || syllables[index + 1].has_accented_vowel()
                     {
-                        HiatusType::Acentual
+                        HiatusType::Accentual
                     } else {
                         HiatusType::Simple
                     },
                 });
             } else if syllables[index].nucleus.chars().count() == 2 {
-                let dp_type: DiphthongType;
-                if dp_rising.is_match(syllables[index].nucleus.to_lowercase().as_str()) {
-                    dp_type = DiphthongType::Rising;
-                } else if dp_falling.is_match(syllables[index].nucleus.to_lowercase().as_str()) {
-                    dp_type = DiphthongType::Falling;
-                } else if dp_homogenous.is_match(syllables[index].nucleus.to_lowercase().as_str()) {
-                    dp_type = DiphthongType::Homogenous;
-                } else {
-                    panic!("Not a diphthong");
-                }
+                let mut iter = syllables[index].nucleus.chars();
+                let a = iter.next().unwrap();
+                let b = iter.next().unwrap();
+                let dp_type: DiphthongType = match combo_type(a, b) {
+                    ComboType::Diphthong(t) => t,
+                    _ => panic!("Not a diphthong"),
+                };
                 diphthongs.push(Diphthong {
                     syllable_index: index,
                     kind: dp_type,
@@ -389,7 +384,7 @@ fn to_syllables(word: &str) -> Vec<Syllable> {
             syllable.nucleus.push(curr_char);
         } else if position == Position::Nucleus {
             if syllable.nucleus.chars().count() == 1 {
-                if can_form_hiatus(curr_char, syllable.nucleus.chars().next().unwrap()) {
+                if can_form_hiatus(syllable.nucleus.chars().next().unwrap(), curr_char) {
                     syllables.push(syllable);
                     syllable = Syllable {
                         onset: "".to_string(),
