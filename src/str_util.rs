@@ -1,25 +1,13 @@
 use crate::char_util::{IsVowel};
 
-const CONSONANT_BLENDS: &[&str] = &[
-    "bl", "fl", "cl", "gl", "pl", "cr", "br", "tr", "gr", "fr", "pr", "dr", "tl",
-];
-
-const DIAGRAPHS: &[&str] = &["ch", "ll", "rr"];
-
 /// Returns true if the given string is a consonant blend or a digraph
 pub fn is_consonant_group(s: &str) -> bool {
-    CONSONANT_BLENDS.contains(&s) || DIAGRAPHS.contains(&s)
+    match s {
+        "bl"| "fl"| "cl"| "gl"| "pl"| "cr"| "br"| "tr"| "gr"| "fr"| "pr"| "dr"| "tl" => true,
+        "ch"| "ll"| "rr" => true,
+        _ => false,
+    }
 }
-
-// pub fn is_diphthong(s: &str) -> bool {
-//     let chars = s.chars();
-//     let a = chars.next().unwrap();
-//     let b = chars.next().unwrap();
-//     match combo_type(a, b) {
-//         ComboType::Diphthong(_) => true,
-//         _ => false,
-//     }
-// }
 
 /// Returns index of the stressed vowel in the given string of vowels
 pub fn stress_index(s: &str) -> usize {
@@ -39,8 +27,6 @@ pub fn stress_index(s: &str) -> usize {
 }
 
 pub fn loose_match(s: &str, t: &str) -> bool {
-    // let s = s.chars().next().unwrap();
-    // let t = t.chars().next().unwrap();
     match s {
         "a" | "á" => {
             match t {
