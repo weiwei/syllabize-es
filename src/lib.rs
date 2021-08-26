@@ -15,9 +15,9 @@ pub mod char_util;
 pub mod str_util;
 pub mod syllable;
 
-use crate::char_util::ComboType;
-use crate::char_util::combo_type;
 use crate::char_util::can_form_triphthong;
+use crate::char_util::combo_type;
+use crate::char_util::ComboType;
 use crate::char_util::IsVowel;
 use crate::str_util::is_consonant_group;
 use crate::syllable::Syllable;
@@ -176,8 +176,9 @@ impl Word {
         let mut diphthongs = vec![];
         let mut triphthongs = vec![];
         while index < syllables.len() {
+            let nucleus_chars: Vec<char> = syllables[index].nucleus.chars().collect();
             if syllables[index].coda.is_empty()
-                && syllables[index].nucleus.chars().count() == 1
+                && nucleus_chars.len() == 1
                 && index + 1 < syllables.len()
                 && (syllables[index + 1].onset.is_empty() || syllables[index + 1].onset == "h")
                 && syllables[index + 1].nucleus.chars().count() == 1
@@ -195,11 +196,8 @@ impl Word {
                         HiatusType::Simple
                     },
                 });
-            } else if syllables[index].nucleus.chars().count() == 2 {
-                let mut iter = syllables[index].nucleus.chars();
-                let a = iter.next().unwrap();
-                let b = iter.next().unwrap();
-                let dp_type: DiphthongType = match combo_type(a, b) {
+            } else if nucleus_chars.len() == 2 {
+                let dp_type: DiphthongType = match combo_type(nucleus_chars[0], nucleus_chars[1]) {
                     ComboType::Diphthong(t) => t,
                     _ => panic!("Not a diphthong"),
                 };
@@ -275,6 +273,25 @@ impl Display for Word {
 }
 
 fn to_syllables(word: &str) -> Vec<Syllable> {
+    if word.is_empty() {
+        return vec![];
+    }
+
+    let chars: Vec<char> = word.chars().collect();
+    let word_len = chars.len();
+
+    if word_len == 1 {
+        return vec![Syllable {
+            onset: "".to_string(),
+            nucleus: chars[0].to_string(),
+            coda: "".to_string(),
+        }];
+    }
+
+    // Officially the longest word is 12 syllables, here we give some leeway
+    // shaves of 100ns
+    let mut syllables: Vec<Syllable> = Vec::with_capacity(32);
+
     let mut index = 0;
     let mut position = Position::None;
     let mut syllable = Syllable {
@@ -282,18 +299,7 @@ fn to_syllables(word: &str) -> Vec<Syllable> {
         nucleus: "".to_string(),
         coda: "".to_string(),
     };
-    let chars: Vec<char> = word.chars().collect();
-    let word_len = chars.len();
-    let mut syllables: Vec<Syllable> = Vec::new();
-    if word_len == 0 {
-        syllables.push(syllable);
-        return syllables;
-    }
-    if word_len == 1 {
-        syllable.nucleus.push(chars[0]);
-        syllables.push(syllable);
-        return syllables;
-    }
+
     loop {
         let curr_char = chars[index];
         if !curr_char.is_vowel() {
@@ -484,7 +490,7 @@ fn to_syllables(word: &str) -> Vec<Syllable> {
 
 fn identify_stress(syllables: &[Syllable]) -> usize {
     let syllable_count = syllables.len();
-    if syllable_count == 1 {
+    if syllable_count == 0 || syllable_count == 1 {
         return 0;
     }
     if syllable_count > 1 && syllables[syllable_count - 1].has_accented_vowel() {

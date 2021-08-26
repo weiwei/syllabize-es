@@ -1,12 +1,25 @@
-use crate::char_util::{IsVowel};
+use crate::char_util::IsVowel;
 
 /// Returns true if the given string is a consonant blend or a digraph
 pub fn is_consonant_group(s: &str) -> bool {
-    match s {
-        "bl"| "fl"| "cl"| "gl"| "pl"| "cr"| "br"| "tr"| "gr"| "fr"| "pr"| "dr"| "tl" => true,
-        "ch"| "ll"| "rr" => true,
-        _ => false,
-    }
+    matches!(
+        s,
+        "bl" | "fl"
+            | "cl"
+            | "gl"
+            | "pl"
+            | "cr"
+            | "br"
+            | "tr"
+            | "gr"
+            | "fr"
+            | "pr"
+            | "dr"
+            | "tl"
+            | "ch"
+            | "ll"
+            | "rr"
+    )
 }
 
 /// Returns index of the stressed vowel in the given string of vowels
@@ -28,60 +41,15 @@ pub fn stress_index(s: &str) -> usize {
 
 pub fn loose_match(s: &str, t: &str) -> bool {
     match s {
-        "a" | "á" => {
-            match t {
-                "a" | "á" => true,
-                _ => false,
-            }
-        },
-        "e" | "é" => {
-            match t {
-                "e" | "é" => true,
-                _ => false,
-            }
-        },
-        "i" | "í" => {
-            match t {
-                "i" | "í" => true,
-                _ => false,
-            }
-        },
-        "o" | "ó" => {
-            match t {
-                "o" | "ó" => true,
-                _ => false,
-            }
-        },
-        "u" | "ú" | "ü" => {
-            match t {
-                "u" | "ú" | "ü" => true,
-                _ => false,
-            }
-        },
-        "ai" | "ay" => {
-            match t {
-                "ai" | "ay" => true,
-                _ => false,
-            }
-        },
-        "oi" | "oy" => {
-            match t {
-                "oi" | "oy" => true,
-                _ => false,
-            }
-        },
-        "ei" | "ey" => {
-            match t {
-                "ei" | "ey" => true,
-                _ => false,
-            }
-        },
-        "ui" | "uy" | "üi" | "üy" => {
-            match t {
-                "ui" | "uy" | "üi" | "üy" => true,
-                _ => false,
-            }
-        },
+        "a" | "á" => matches!(t, "a" | "á"),
+        "e" | "é" => matches!(t, "e" | "é"),
+        "i" | "í" => matches!(t, "i" | "í"),
+        "o" | "ó" => matches!(t, "o" | "ó"),
+        "u" | "ú" | "ü" => matches!(t, "u" | "ú" | "ü"),
+        "ai" | "ay" => matches!(t, "ai" | "ay"),
+        "oi" | "oy" => matches!(t, "oi" | "oy"),
+        "ei" | "ey" => matches!(t, "ei" | "ey"),
+        "ui" | "uy" | "üi" | "üy" => matches!(t, "ui" | "uy" | "üi" | "üy"),
         _ => false,
     }
 }

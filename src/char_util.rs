@@ -9,30 +9,59 @@ pub trait IsVowel: private::Sealed {
 
 impl IsVowel for char {
     fn is_vowel(&self) -> bool {
-        match self {
-            'a' | 'e' | 'i' | 'o' | 'u' | 'ü' | 'A' | 'E' | 'I' | 'O' | 'U' | 'Ü' => true,
-            'á' | 'é' | 'í' | 'ó' | 'ú' | 'Á' | 'É' | 'Í' | 'Ó' | 'Ú' => true,
-            _ => false,
-        }
+        matches!(
+            self,
+            'a' | 'e'
+                | 'i'
+                | 'o'
+                | 'u'
+                | 'ü'
+                | 'A'
+                | 'E'
+                | 'I'
+                | 'O'
+                | 'U'
+                | 'Ü'
+                | 'á'
+                | 'é'
+                | 'í'
+                | 'ó'
+                | 'ú'
+                | 'Á'
+                | 'É'
+                | 'Í'
+                | 'Ó'
+                | 'Ú'
+        )
     }
     fn is_weak_vowel(&self) -> bool {
-        match self {
-            'i' | 'u' | 'ü' | 'I' | 'U' | 'Ü' => true,
-            _ => false,
-        }
+        matches!(self, 'i' | 'u' | 'ü' | 'I' | 'U' | 'Ü')
     }
     fn is_stressed_vowel(&self) -> bool {
-        match self {
-            'á' | 'é' | 'í' | 'ó' | 'ú' | 'Á' | 'É' | 'Í' | 'Ó' | 'Ú' => true,
-            'a' | 'e' | 'o' | 'A' | 'E' | 'O' => true,
-            _ => false,
-        }
+        matches!(
+            self,
+            'á' | 'é'
+                | 'í'
+                | 'ó'
+                | 'ú'
+                | 'Á'
+                | 'É'
+                | 'Í'
+                | 'Ó'
+                | 'Ú'
+                | 'a'
+                | 'e'
+                | 'o'
+                | 'A'
+                | 'E'
+                | 'O'
+        )
     }
     fn is_accented_vowel(&self) -> bool {
-        match self {
-            'á' | 'é' | 'í' | 'ó' | 'ú' | 'Á' | 'É' | 'Í' | 'Ó' | 'Ú' => true,
-            _ => false,
-        }
+        matches!(
+            self,
+            'á' | 'é' | 'í' | 'ó' | 'ú' | 'Á' | 'É' | 'Í' | 'Ó' | 'Ú'
+        )
     }
 }
 
@@ -113,10 +142,7 @@ pub fn combo_type(a: char, b: char) -> ComboType {
 }
 
 pub fn can_form_hiatus(a: char, b: char) -> bool {
-    return match combo_type(a, b) {
-        ComboType::Hiatus(_) => true,
-        _ => false,
-    }
+    matches!(combo_type(a, b), ComboType::Hiatus(_))
 }
 
 /// Returns true if three characters make a triphthong.
