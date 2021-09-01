@@ -527,9 +527,15 @@ fn identify_stress(syllables: &[Syllable]) -> usize {
         }
     }
 
-    let last_coda = syllables[syllable_count - 1].coda.as_str();
-    if !last_coda.is_empty() && last_coda != "n" && last_coda != "s" {
-        return syllable_count - 1;
+    let last_syllable = &syllables[syllable_count - 1];
+    if last_syllable.coda.is_empty() {
+        if last_syllable.nucleus.chars().count() == 3 {
+            return syllable_count - 1;
+        }
+    } else {
+        if last_syllable.coda != "n" && last_syllable.coda != "s" {
+            return syllable_count - 1;
+        }
     }
 
     syllable_count - 2

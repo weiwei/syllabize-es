@@ -3,7 +3,7 @@ use syllabize_es::{StressType, Word};
 #[test]
 fn test_oxytone() {
     let data = vec![
-        "a", "la", "gol", "olé", "pié", "piedad", "pastel", "habló", "reloj", "vivir",
+        "a", "la", "gol", "olé", "pié", "piedad", "pastel", "habló", "reloj", "vivir", "Paraguay",
     ];
     for s in data {
         let w: Word = s.into();

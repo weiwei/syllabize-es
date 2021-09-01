@@ -167,12 +167,10 @@ fn que() {
     let w: Word = "que".into();
     assert_eq!(
         w.syllables,
-        vec![
-            Syllable {
-                onset: "qu".to_string(),
-                nucleus: "e".to_string(),
-                coda: "".to_string()
-            }
-        ]
+        vec![Syllable {
+            onset: "qu".to_string(),
+            nucleus: "e".to_string(),
+            coda: "".to_string()
+        }]
     );
 }
