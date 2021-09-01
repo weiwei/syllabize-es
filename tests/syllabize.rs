@@ -174,3 +174,63 @@ fn que() {
         }]
     );
 }
+
+#[test]
+fn rry() {
+    let w: Word = "curry".into();
+    assert_eq!(
+        w.syllables,
+        vec![Syllable {
+            onset: "c".to_string(),
+            nucleus: "u".to_string(),
+            coda: "".to_string()
+        },Syllable {
+            onset: "rr".to_string(),
+            nucleus: "y".to_string(),
+            coda: "".to_string()
+        }]
+    );
+}
+
+#[test]
+fn nry() {
+    let w: Word = "henry".into();
+    assert_eq!(
+        w.syllables,
+        vec![Syllable {
+            onset: "h".to_string(),
+            nucleus: "e".to_string(),
+            coda: "n".to_string()
+        },Syllable {
+            onset: "r".to_string(),
+            nucleus: "y".to_string(),
+            coda: "".to_string()
+        }]
+    );
+}
+
+#[test]
+fn vg() {
+    let w: Word = "blog".into();
+    assert_eq!(
+        w.syllables,
+        vec![Syllable {
+            onset: "bl".to_string(),
+            nucleus: "o".to_string(),
+            coda: "g".to_string()
+        }]
+    );
+}
+
+#[test]
+fn vng() {
+    let w: Word = "hong".into();
+    assert_eq!(
+        w.syllables,
+        vec![Syllable {
+            onset: "h".to_string(),
+            nucleus: "o".to_string(),
+            coda: "ng".to_string()
+        }]
+    );
+}

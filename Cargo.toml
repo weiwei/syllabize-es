@@ -1,7 +1,7 @@
 cargo-features = ["edition2021"]
 [package]
 name = "syllabize-es"
-version = "0.4.4"
+version = "0.4.5"
 authors = ["Weiwei Wang <gastlygem@gmail.com"]
 edition = "2021"
 license = "MIT"

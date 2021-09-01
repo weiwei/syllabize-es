@@ -304,9 +304,17 @@ fn to_syllables(word: &str) -> Vec<Syllable> {
         let curr_char = chars[index];
         if !curr_char.is_vowel() {
             if position == Position::None || position == Position::Onset {
-                position = Position::Onset;
-                syllable.onset.push(curr_char);
-                if curr_char == 'q' || curr_char == 'g' {
+                if curr_char == 'y' {
+                    if syllable.onset.is_empty() {
+                        syllable.onset.push(curr_char);
+                        position = Position::Onset;
+                    } else {
+                        syllable.nucleus.push(curr_char);
+                        position = Position::Nucleus
+                    }
+                } else if curr_char == 'q' || curr_char == 'g' {
+                    syllable.onset.push(curr_char);
+                    position = Position::Onset;
                     index += 1;
                     let next_char = chars[index];
                     if next_char == 'u' {
@@ -320,6 +328,9 @@ fn to_syllables(word: &str) -> Vec<Syllable> {
                     } else {
                         index -= 1;
                     }
+                } else {
+                    syllable.onset.push(curr_char);
+                    position = Position::Onset;
                 }
             } else if position == Position::Nucleus {
                 if curr_char == 'y'
@@ -398,7 +409,58 @@ fn to_syllables(word: &str) -> Vec<Syllable> {
                     position = Position::Coda;
                 }
             } else if position == Position::Coda {
-                syllable.coda.push(curr_char);
+                if curr_char == 'y' {
+                    if syllable.coda.chars().count() == 1 {
+                        if index + 1 < word_len {
+                            if chars[index + 1].is_vowel() {
+                                syllables.push(syllable);
+                                syllable = Syllable {
+                                    onset: curr_char.to_string(),
+                                    nucleus: "".to_string(),
+                                    coda: "".to_string(),
+                                };
+                                position = Position::Onset;
+                            } else {
+                                let onset = syllable.coda.clone();
+                                syllable.coda.clear();
+                                syllables.push(syllable);
+                                syllable = Syllable {
+                                    onset,
+                                    nucleus: curr_char.to_string(),
+                                    coda: "".to_string(),
+                                };
+                                position = Position::Nucleus;
+                            }
+                        }
+                    } else if syllable.coda.chars().count() == 2 {
+                        if is_consonant_group(syllable.coda.as_str()) {
+                            let onset = syllable.coda.clone();
+                            syllable.coda = "".to_string();
+                            syllables.push(syllable);
+                            syllable = Syllable {
+                                onset,
+                                nucleus: curr_char.to_string(),
+                                coda: "".to_string(),
+                            };
+                            position = Position::Nucleus;
+                        } else {
+                            let chars: Vec<char> = syllable.coda.chars().collect();
+                            let onset = chars[1].to_string();
+                            syllable.coda = chars[0].to_string();
+                            syllables.push(syllable);
+                            syllable = Syllable {
+                                onset,
+                                nucleus: curr_char.to_string(),
+                                coda: "".to_string(),
+                            };
+                            position = Position::Nucleus;
+                        }
+                    } else {
+                        syllable.coda.push(curr_char);
+                    }
+                } else {
+                    syllable.coda.push(curr_char);
+                }
             }
         } else if position == Position::None || position == Position::Onset {
             position = Position::Nucleus;
