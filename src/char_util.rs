@@ -35,7 +35,7 @@ impl IsVowel for char {
         )
     }
     fn is_weak_vowel(&self) -> bool {
-        matches!(self, 'i' | 'u' | 'ü' | 'I' | 'U' | 'Ü')
+        matches!(self, 'i' | 'y' | 'u' | 'ü' | 'I' | 'Y' | 'U' | 'Ü')
     }
     fn is_stressed_vowel(&self) -> bool {
         matches!(

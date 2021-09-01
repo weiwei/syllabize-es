@@ -306,6 +306,21 @@ fn to_syllables(word: &str) -> Vec<Syllable> {
             if position == Position::None || position == Position::Onset {
                 position = Position::Onset;
                 syllable.onset.push(curr_char);
+                if curr_char == 'q' || curr_char == 'g' {
+                    index += 1;
+                    let next_char = chars[index];
+                    if next_char == 'u' {
+                        index += 1;
+                        let after_next_char = chars[index];
+                        if after_next_char == 'i' || after_next_char == 'e' {
+                            syllable.onset.push(next_char);
+                            syllable.nucleus.push(after_next_char);
+                            position = Position::Nucleus;
+                        }
+                    } else {
+                        index -= 1;
+                    }
+                }
             } else if position == Position::Nucleus {
                 if curr_char == 'y'
                     && (index == word_len - 1
