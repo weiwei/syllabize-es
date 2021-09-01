@@ -41,7 +41,7 @@ impl Syllable {
     /// ```
     /// use syllabize_es::syllable::*;
     /// let syllable = Syllable {
-    ///     onset: "b".to_string(),
+    ///     onset: "g".to_string(),
     ///     nucleus: "üey".to_string(),
     ///     coda: "".to_string()
     /// };

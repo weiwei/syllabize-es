@@ -103,3 +103,76 @@ fn cvvy() {
         }]
     );
 }
+
+#[test]
+fn gü() {
+    let w: Word = "güey".into();
+    assert_eq!(
+        w.syllables,
+        vec![Syllable {
+            onset: "g".to_string(),
+            nucleus: "üey".to_string(),
+            coda: "".to_string()
+        }]
+    );
+}
+
+#[test]
+fn gui() {
+    let w: Word = "guitarra".into();
+    assert_eq!(
+        w.syllables,
+        vec![
+            Syllable {
+                onset: "gu".to_string(),
+                nucleus: "i".to_string(),
+                coda: "".to_string()
+            },
+            Syllable {
+                onset: "t".to_string(),
+                nucleus: "a".to_string(),
+                coda: "".to_string()
+            },
+            Syllable {
+                onset: "rr".to_string(),
+                nucleus: "a".to_string(),
+                coda: "".to_string()
+            }
+        ]
+    );
+}
+
+#[test]
+fn guia() {
+    let w: Word = "guiada".into();
+    assert_eq!(
+        w.syllables,
+        vec![
+            Syllable {
+                onset: "gu".to_string(),
+                nucleus: "ia".to_string(),
+                coda: "".to_string()
+            },
+            Syllable {
+                onset: "d".to_string(),
+                nucleus: "a".to_string(),
+                coda: "".to_string()
+            }
+        ]
+    );
+}
+
+#[test]
+fn que() {
+    let w: Word = "que".into();
+    assert_eq!(
+        w.syllables,
+        vec![
+            Syllable {
+                onset: "qu".to_string(),
+                nucleus: "e".to_string(),
+                coda: "".to_string()
+            }
+        ]
+    );
+}
