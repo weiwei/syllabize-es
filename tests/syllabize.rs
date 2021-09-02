@@ -180,15 +180,18 @@ fn rry() {
     let w: Word = "curry".into();
     assert_eq!(
         w.syllables,
-        vec![Syllable {
-            onset: "c".to_string(),
-            nucleus: "u".to_string(),
-            coda: "".to_string()
-        },Syllable {
-            onset: "rr".to_string(),
-            nucleus: "y".to_string(),
-            coda: "".to_string()
-        }]
+        vec![
+            Syllable {
+                onset: "c".to_string(),
+                nucleus: "u".to_string(),
+                coda: "".to_string()
+            },
+            Syllable {
+                onset: "rr".to_string(),
+                nucleus: "y".to_string(),
+                coda: "".to_string()
+            }
+        ]
     );
 }
 
@@ -197,15 +200,18 @@ fn nry() {
     let w: Word = "henry".into();
     assert_eq!(
         w.syllables,
-        vec![Syllable {
-            onset: "h".to_string(),
-            nucleus: "e".to_string(),
-            coda: "n".to_string()
-        },Syllable {
-            onset: "r".to_string(),
-            nucleus: "y".to_string(),
-            coda: "".to_string()
-        }]
+        vec![
+            Syllable {
+                onset: "h".to_string(),
+                nucleus: "e".to_string(),
+                coda: "n".to_string()
+            },
+            Syllable {
+                onset: "r".to_string(),
+                nucleus: "y".to_string(),
+                coda: "".to_string()
+            }
+        ]
     );
 }
 

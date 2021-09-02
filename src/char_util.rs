@@ -5,6 +5,7 @@ pub trait IsVowel: private::Sealed {
     fn is_weak_vowel(&self) -> bool;
     fn is_stressed_vowel(&self) -> bool;
     fn is_accented_vowel(&self) -> bool;
+    fn is_soft_c_trigger(&self) -> bool;
 }
 
 impl IsVowel for char {
@@ -61,6 +62,13 @@ impl IsVowel for char {
         matches!(
             self,
             'á' | 'é' | 'í' | 'ó' | 'ú' | 'Á' | 'É' | 'Í' | 'Ó' | 'Ú'
+        )
+    }
+
+    fn is_soft_c_trigger(&self) -> bool {
+        matches!(
+            self,
+            'e' | 'i' | 'é' | 'í' | 'É' | 'Í' | 'E' | 'I' | 'y' | 'Y'
         )
     }
 }

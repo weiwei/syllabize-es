@@ -54,6 +54,14 @@ pub fn loose_match(s: &str, t: &str) -> bool {
     }
 }
 
+pub fn is_both_s_or_z(a: &str, b: &str) -> bool {
+    (a == "s" && b == "z") || (a == "z" && b == "s")
+}
+
+pub fn is_both_b_or_v(a: &str, b: &str) -> bool {
+    a == "b" && b == "v" || a == "v" && b == "b"
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

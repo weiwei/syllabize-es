@@ -9,6 +9,8 @@ use char_util::can_form_hiatus;
 use std::fmt;
 use std::fmt::Display;
 use std::usize;
+use str_util::is_both_b_or_v;
+use str_util::is_both_s_or_z;
 use str_util::loose_match;
 
 pub mod char_util;
@@ -86,9 +88,47 @@ pub struct VowelCombos {
 }
 
 #[derive(Clone, Copy)]
-pub enum RhymeType {
-    Consonant,
-    Assonant,
+pub struct RhymeOptions {
+    pub yeismo: bool,
+    pub seseo: bool,
+    pub b_equals_v: bool,
+}
+
+pub fn equal_onset(a: &Syllable, b: &Syllable, opt: &RhymeOptions) -> bool {
+    if a.onset == b.onset {
+        return true;
+    }
+    if opt.seseo {
+        if a.onset == "c" && b.onset == "s" {
+            let a_first_nucleus = a.nucleus.chars().next().unwrap();
+            if a_first_nucleus.is_soft_c_trigger()
+                && loose_match(a.nucleus.as_str(), b.nucleus.as_str())
+            {
+                return true;
+            }
+        } else if a.onset == "s" && b.onset == "c" {
+            let b_first_nucleus = b.nucleus.chars().next().unwrap();
+            if b_first_nucleus.is_soft_c_trigger()
+                && loose_match(a.nucleus.as_str(), b.nucleus.as_str())
+            {
+                return true;
+            }
+        } else if is_both_s_or_z(a.onset.as_str(), b.onset.as_str()) {
+            return true;
+        }
+    }
+    if opt.yeismo {
+        if a.onset == "y" && b.onset == "ll" || a.onset == "ll" && b.onset == "y" {
+            return true;
+        }
+    }
+    if opt.b_equals_v {
+        if is_both_b_or_v(a.onset.as_str(), b.onset.as_str()) {
+            return true;
+        }
+    }
+
+    false
 }
 
 /// A parsed word that contains syllables and stress information
@@ -110,63 +150,76 @@ impl Word {
         rhyme
     }
 
-    pub fn rhymes_with(&self, other: &Word, kind: RhymeType) -> bool {
+    pub fn assonant_rhymes_with(&self, other: &Word) -> bool {
         let this_syllables = &self.syllables[self.stress_index..self.syllables.len()];
         let that_syllables = &other.syllables[other.stress_index..other.syllables.len()];
         if this_syllables.len() != that_syllables.len() {
             return false;
         }
-        match kind {
-            RhymeType::Consonant => {
-                for (i, j) in this_syllables.iter().enumerate() {
-                    if i == 0 {
-                        let k1 = j.vowels_since_stress();
-                        let k2 = that_syllables[i].vowels_since_stress();
-                        if this_syllables.len() == 1 {
-                            if !loose_match(&k1, &k2) || j.coda != that_syllables[i].coda {
+        for (i, j) in this_syllables.iter().enumerate() {
+            if i == 0 {
+                let k1 = j.vowels_since_stress();
+                let k2 = that_syllables[i].vowels_since_stress();
+                if k1 != k2 {
+                    if k1.chars().count() == k2.chars().count() {
+                        if k1.chars().count() == 1 {
+                            let m1 = k1.chars().collect::<String>();
+                            let m2 = k2.chars().collect::<String>();
+                            if !loose_match(m1.as_str(), m2.as_str()) {
                                 return false;
                             }
-                        } else if k1 != k2 || j.coda != that_syllables[i].coda {
+                        } else if k1.chars().collect::<String>() != k2.chars().collect::<String>() {
                             return false;
                         }
-                    } else if j.onset != that_syllables[i].onset
-                        || j.nucleus != that_syllables[i].nucleus
-                        || j.coda != that_syllables[i].coda
-                    {
+                    } else {
                         return false;
                     }
                 }
-                true
-            }
-            RhymeType::Assonant => {
-                for (i, j) in this_syllables.iter().enumerate() {
-                    if i == 0 {
-                        let k1 = j.vowels_since_stress();
-                        let k2 = that_syllables[i].vowels_since_stress();
-                        if k1 != k2 {
-                            if k1.chars().count() == k2.chars().count() {
-                                if k1.chars().count() == 1 {
-                                    let m1 = k1.chars().collect::<String>();
-                                    let m2 = k2.chars().collect::<String>();
-                                    if !loose_match(m1.as_str(), m2.as_str()) {
-                                        return false;
-                                    }
-                                } else if k1.chars().collect::<String>()
-                                    != k2.chars().collect::<String>()
-                                {
-                                    return false;
-                                }
-                            } else {
-                                return false;
-                            }
-                        }
-                    } else if j.nucleus != that_syllables[i].nucleus {
-                        return false;
-                    }
-                }
-                true
+            } else if j.nucleus != that_syllables[i].nucleus {
+                return false;
             }
         }
+        true
+    }
+
+    pub fn rhymes_with(&self, other: &Word, opt: Option<RhymeOptions>) -> bool {
+        let opt = opt.unwrap_or(RhymeOptions {
+            seseo: false,
+            yeismo: true,
+            b_equals_v: true,
+        });
+        let this_syllables = &self.syllables[self.stress_index..self.syllables.len()];
+        let that_syllables = &other.syllables[other.stress_index..other.syllables.len()];
+        if this_syllables.len() != that_syllables.len() {
+            return false;
+        }
+        let mut res = false;
+        for (i, j) in this_syllables.iter().enumerate() {
+            if i == 0 {
+                let k1 = j.vowels_since_stress();
+                let k2 = that_syllables[i].vowels_since_stress();
+                if this_syllables.len() == 1 {
+                    if !loose_match(&k1, &k2) {
+                        return false;
+                    } 
+                    if !opt.seseo && j.coda != that_syllables[i].coda {
+                        return false;
+                    } 
+                    if opt.seseo && is_both_s_or_z(j.coda.as_str(), that_syllables[i].coda.as_str()) {
+                        return true;
+                    }
+                    return true;
+                } else if k1 != k2 || j.coda != that_syllables[i].coda {
+                    return false;
+                }
+            } else if equal_onset(j, &that_syllables[i], &opt) // j.onset != that_syllables[i].onset
+                && j.nucleus == that_syllables[i].nucleus
+                && (j.coda == that_syllables[i].coda || (opt.seseo && is_both_s_or_z(j.coda.as_str(), that_syllables[i].coda.as_str())))
+            {
+                res = true;
+            }
+        }
+        res
     }
 
     pub fn vowel_combos(&self) -> VowelCombos {
@@ -620,28 +673,113 @@ mod tests {
     #[test]
     fn test_rhymes_with() {
         let word: Word = "vida".into();
-        assert!(word.rhymes_with(&Word::from("frida"), RhymeType::Consonant));
-        assert!(!word.rhymes_with(&Word::from("vía"), RhymeType::Consonant));
-        assert!(word.rhymes_with(&Word::from("villa"), RhymeType::Assonant));
-        assert!(word.rhymes_with(&Word::from("vía"), RhymeType::Assonant));
+        assert!(word.rhymes_with(&Word::from("frida"), None));
+        assert!(!word.rhymes_with(&Word::from("vía"), None));
+        assert!(word.assonant_rhymes_with(&Word::from("villa")));
+        assert!(word.assonant_rhymes_with(&Word::from("vía")));
+    }
+
+    #[test]
+    fn test_rhymes_with_yeismo() {
+        let word: Word = "callo".into();
+        assert!(word.rhymes_with(
+            &Word::from("cayo"),
+            Some(RhymeOptions {
+                yeismo: true,
+                seseo: false,
+                b_equals_v: true
+            })
+        ));
+        assert!(!word.rhymes_with(
+            &Word::from("cayo"),
+            Some(RhymeOptions {
+                yeismo: false,
+                seseo: false,
+                b_equals_v: true
+            })
+        ));
+    }
+
+    #[test]
+    fn test_rhymes_with_seseo() {
+        let word: Word = "cabeza".into();
+        assert!(word.rhymes_with(
+            &Word::from("besa"),
+            Some(RhymeOptions {
+                yeismo: true,
+                seseo: true,
+                b_equals_v: true
+            })
+        ));
+        assert!(!word.rhymes_with(
+            &Word::from("besa"),
+            Some(RhymeOptions {
+                yeismo: true,
+                seseo: false,
+                b_equals_v: true
+            })
+        ));
+    }
+
+    #[test]
+    fn test_rhymes_with_seseo_end() {
+        let word: Word = "estrés".into();
+        assert!(word.rhymes_with(
+            &Word::from("vez"),
+            Some(RhymeOptions {
+                yeismo: true,
+                seseo: true,
+                b_equals_v: true
+            })
+        ));
+        assert!(!word.rhymes_with(
+            &Word::from("vez"),
+            Some(RhymeOptions {
+                yeismo: true,
+                seseo: false,
+                b_equals_v: true
+            })
+        ));
+    }
+
+
+    #[test]
+    fn test_rhymes_b_v() {
+        let word: Word = "escribe".into();
+        assert!(word.rhymes_with(
+            &Word::from("declive"),
+            Some(RhymeOptions {
+                yeismo: true,
+                seseo: true,
+                b_equals_v: true
+            })
+        ));
+        assert!(!word.rhymes_with(
+            &Word::from("declive"),
+            Some(RhymeOptions {
+                yeismo: true,
+                seseo: true,
+                b_equals_v: false
+            })
+        ));
     }
 
     #[test]
     fn test_rhymes_with_single_syllable() {
         let word: Word = "vi".into();
-        assert!(word.rhymes_with(&Word::from("tí"), RhymeType::Consonant));
+        assert!(word.rhymes_with(&Word::from("tí"), None));
     }
 
     #[test]
     fn test_rhymes_with_y() {
         let word: Word = "ley".into();
-        assert!(!word.rhymes_with(&Word::from("é"), RhymeType::Consonant));
+        assert!(!word.rhymes_with(&Word::from("é"), None));
     }
 
     #[test]
     fn test_rhymes_no_match() {
         let word: Word = "vi".into();
-        assert!(!word.rhymes_with(&Word::from("sid"), RhymeType::Consonant));
+        assert!(!word.rhymes_with(&Word::from("sid"), None));
     }
 
     #[test]

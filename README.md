@@ -16,7 +16,7 @@ It is tested against a comprehensive dataset, so the package should be quite rel
 ## Example
 
 ```rust
-use syllabize_es::{syllable::Syllable, Word, StressType, DiphthongType, RhymeType};
+use syllabize_es::{syllable::Syllable, Word, StressType, DiphthongType, RhymeOptions};
 
 // Convert a word into syllabized struct
 let word: Word = "construir".into();
@@ -65,9 +65,12 @@ assert_eq!(dp.composite, "ui");
 // The rhyming part of the word
 assert_eq!(word.rhyme(), "ir");
 
-// The rhyming part of the word
-assert!(word.rhymes_with(&Word::from("ir"), RhymeType::Consonant));
-assert!(word.rhymes_with(&Word::from("colibrí"), RhymeType::Assonant));
+// The rhyming with default options `RhymeOptions { yeismo: true, seseo: false, b_equals_v: true}`
+assert!(word.rhymes_with(&Word::from("ir"), None));
+// Rhyming with custom options
+assert!(word.rhymes_with(&Word::from("ir"), Some(RhymeOptions { yeismo: true, seseo: true, b_equals_v: true})));
+// Assonant rhymes
+assert!(word.assonant_rhymes_with(&Word::from("colibrí")));
 ```
 
 ## CLI Example
