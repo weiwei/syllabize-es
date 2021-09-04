@@ -35,3 +35,9 @@ fn esdrújulo() {
     let word: Word = "esdrújulo".into();
     assert_eq!(word.rhyme(), "újulo");
 }
+
+#[test]
+fn esdrújulo_2() {
+    let word: Word = "básico".into();
+    assert!(!word.rhymes_with(&Word::from("ático"), None));
+}

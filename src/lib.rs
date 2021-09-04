@@ -193,7 +193,6 @@ impl Word {
         if this_syllables.len() != that_syllables.len() {
             return false;
         }
-        let mut res = false;
         for (i, j) in this_syllables.iter().enumerate() {
             if i == 0 {
                 let k1 = j.vowels_since_stress();
@@ -201,25 +200,26 @@ impl Word {
                 if this_syllables.len() == 1 {
                     if !loose_match(&k1, &k2) {
                         return false;
-                    } 
+                    }
                     if !opt.seseo && j.coda != that_syllables[i].coda {
                         return false;
-                    } 
-                    if opt.seseo && is_both_s_or_z(j.coda.as_str(), that_syllables[i].coda.as_str()) {
+                    }
+                    if opt.seseo && is_both_s_or_z(j.coda.as_str(), that_syllables[i].coda.as_str())
+                    {
                         return true;
                     }
                     return true;
                 } else if k1 != k2 || j.coda != that_syllables[i].coda {
                     return false;
                 }
-            } else if equal_onset(j, &that_syllables[i], &opt) // j.onset != that_syllables[i].onset
-                && j.nucleus == that_syllables[i].nucleus
-                && (j.coda == that_syllables[i].coda || (opt.seseo && is_both_s_or_z(j.coda.as_str(), that_syllables[i].coda.as_str())))
+            } else if !equal_onset(j, &that_syllables[i], &opt) // j.onset != that_syllables[i].onset
+                || j.nucleus != that_syllables[i].nucleus
+                || !(j.coda == that_syllables[i].coda || (opt.seseo && is_both_s_or_z(j.coda.as_str(), that_syllables[i].coda.as_str())))
             {
-                res = true;
+                return false;
             }
         }
-        res
+        true
     }
 
     pub fn vowel_combos(&self) -> VowelCombos {
@@ -741,7 +741,6 @@ mod tests {
             })
         ));
     }
-
 
     #[test]
     fn test_rhymes_b_v() {
