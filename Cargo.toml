@@ -1,6 +1,6 @@
 [package]
 name = "syllabize-es"
-version = "0.5.1"
+version = "0.5.2"
 authors = ["Weiwei Wang <gastlygem@gmail.com"]
 edition = "2021"
 license = "MIT"

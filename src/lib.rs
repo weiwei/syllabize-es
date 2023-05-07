@@ -24,6 +24,17 @@ use crate::char_util::IsVowel;
 use crate::str_util::is_consonant_group;
 use crate::syllable::Syllable;
 
+type Result<T> = std::result::Result<T, InvalidWord>;
+
+#[derive(Debug, Clone)]
+struct InvalidWord;
+
+impl fmt::Display for InvalidWord {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "invalid word")
+    }
+}
+
 /// Types of stress
 #[derive(PartialEq, Debug)]
 pub enum StressType {
@@ -140,6 +151,9 @@ pub struct Word {
 
 impl Word {
     pub fn rhyme(&self) -> String {
+        if self.syllables.len() == 0 {
+            return String::new();
+        }
         let stress_syllable = &self.syllables[self.stress_index];
         let mut rhyme = stress_syllable.vowels_since_stress();
         rhyme.push_str(stress_syllable.coda.as_str());
@@ -305,10 +319,18 @@ impl Word {
 impl From<&str> for Word {
     fn from(item: &str) -> Self {
         let syllables = to_syllables(item);
-        let stress_index = identify_stress(&syllables);
-        Word {
-            syllables,
-            stress_index,
+        match syllables {
+            Ok(s) => {
+                let stress_index = identify_stress(&s);
+                Word {
+                    syllables: s,
+                    stress_index,
+                }
+            }
+            Err(_e) => Word {
+                syllables: vec![],
+                stress_index: 0,
+            }
         }
     }
 }
@@ -325,20 +347,22 @@ impl Display for Word {
     }
 }
 
-fn to_syllables(word: &str) -> Vec<Syllable> {
+
+
+fn to_syllables(word: &str) -> Result<Vec<Syllable>> {
     if word.is_empty() {
-        return vec![];
+        return Ok(vec![]);
     }
 
     let chars: Vec<char> = word.chars().collect();
     let word_len = chars.len();
 
     if word_len == 1 {
-        return vec![Syllable {
+        return Ok(vec![Syllable {
             onset: "".to_string(),
             nucleus: chars[0].to_string(),
             coda: "".to_string(),
-        }];
+        }]);
     }
 
     // Officially the longest word is 12 syllables, here we give some leeway
@@ -369,9 +393,15 @@ fn to_syllables(word: &str) -> Vec<Syllable> {
                     syllable.onset.push(curr_char);
                     position = Position::Onset;
                     index += 1;
+                    if word_len <= index {
+                        return Err(InvalidWord)
+                    }
                     let next_char = chars[index];
                     if next_char == 'u' {
                         index += 1;
+                        if word_len <= index {
+                            return Err(InvalidWord)
+                        }
                         let after_next_char = chars[index];
                         if after_next_char == 'i' || after_next_char == 'e' {
                             syllable.onset.push(next_char);
@@ -393,6 +423,9 @@ fn to_syllables(word: &str) -> Vec<Syllable> {
                     syllable.nucleus.push(curr_char);
                 } else if curr_char == 'h' {
                     index += 1;
+                    if word_len <= index {
+                        return Err(InvalidWord)
+                    }
                     if index == chars.len() {
                         syllable.coda.push(curr_char);
                         position = Position::Coda;
@@ -615,7 +648,7 @@ fn to_syllables(word: &str) -> Vec<Syllable> {
             break;
         }
     }
-    syllables
+    Ok(syllables)
 }
 
 fn identify_stress(syllables: &[Syllable]) -> usize {
